@@ -1,5 +1,3 @@
-# TODO: Add uvc config file
-
 """
 author: @rambech
 """

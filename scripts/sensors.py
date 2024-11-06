@@ -20,7 +20,7 @@ def read_temperature():
     try:
         if use_bar100_sensor:
             bar100_sensor.read()
-            return {"message": bar100_sensor.temperature()}
+            return bar100_sensor.temperature()
 
     except Exception as e:
         print(e)
@@ -32,7 +32,7 @@ def read_pressure():
     try:
         if use_bar100_sensor:
             bar100_sensor.read()
-            return {"message": bar100_sensor.pressure()}
+            return bar100_sensor.pressure()
 
     except Exception as e:
         print(e)

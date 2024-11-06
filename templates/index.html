@@ -17,6 +17,8 @@
     <!-- Relay control -->
     <h2>Power Options</h2>
     <h3>Reboot</h3>
+    <label style="cursor: pointer;" title="Remember to save config" for="reset_time">Reset time:</label>
+    <input type="number" id="reset_time" name="reset_time"> seconds<br>
     <button style="cursor: pointer;" title="Turns of camera for 10 seconds" onclick="rebootCamera()">Reboot
         camera</button><br>
     <button style="cursor: pointer;" title="Turns of daisy chain for 10 seconds" onclick="rebootDaisy()">Reboot
@@ -42,12 +44,6 @@
 
     <!-- Lights configuration -->
     <h3>Video Lights</h3>
-    <!-- <label for="light_time">Trigger time:</label>
-    <input type="time" id="light_time" name="light_time"><br>
-
-    <label for="light_duration">Duration:</label>
-    <input type="number" id="light_duration" name="light_duration"><br> -->
-
     <label style="cursor: pointer;" title="Between 0 and 100" for="light_brightness">Brightness:</label>
     <input type="number" id="light_brightness" name="light_brightness"><br>
 
@@ -90,7 +86,7 @@
                     for (period in periods) {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
                     }
-
+                    document.getElementById("reset_time").value = data.config["reset_time"]
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
 
                     // Load UVC configuration
@@ -117,6 +113,7 @@
             });
 
             const newConfig = {
+                reset_time: document.getElementById("reset_time").value,
                 lights: {
                     periods: periods,
                     brightness: parseInt(document.getElementById("light_brightness").value, 10)

@@ -26,3 +26,32 @@ def reset_camera():
     camera_line.set_value(1)
     sleep(reset_time)
     camera_line.set_value(0)
+
+
+def daisy_on():
+    daisy_line.set_value(0)
+    daisy_line.release()
+
+
+def camera_on():
+    camera_line.set_value(0)
+    camera_line.release()
+
+
+def daisy_off():
+    daisy_line.set_value(1)
+    daisy_line.release()
+
+
+def camera_off():
+    camera_line.set_value(1)
+    camera_line.release()
+
+
+def toggle_camera(on):
+    if not on:
+        camera_off()
+        return False
+    else:
+        camera_on()
+        return True
