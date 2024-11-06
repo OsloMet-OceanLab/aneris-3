@@ -42,14 +42,24 @@
 
     <!-- Lights configuration -->
     <h3>Video Lights</h3>
-    <label for="light_time">Trigger time:</label>
+    <!-- <label for="light_time">Trigger time:</label>
     <input type="time" id="light_time" name="light_time"><br>
 
     <label for="light_duration">Duration:</label>
-    <input type="number" id="light_duration" name="light_duration"><br>
+    <input type="number" id="light_duration" name="light_duration"><br> -->
 
     <label style="cursor: pointer;" title="Between 0 and 100" for="light_brightness">Brightness:</label>
     <input type="number" id="light_brightness" name="light_brightness"><br>
+
+    <!-- Container for dynamic time period inputs -->
+    <label for="timePeriodsContainer">Light timetable</label>
+    <div id="timePeriodsContainer"></div>
+
+    <!-- Buttons to add and submit time periods -->
+    <button onclick="addTimePeriod()">Add Time Period</button>
+    <button onclick="setTimePeriods()">Update Time Periods</button>
+
+    <p id="time_period_ack"></p> <!-- Display result -->
 
     <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="triggerLight()">Test
         lights</button><br>
@@ -74,8 +84,13 @@
                 .then(response => response.json())
                 .then(data => {
                     // Load lights configuration
-                    document.getElementById('light_time').value = data.config["lights"]["time"];
-                    document.getElementById('light_duration').value = data.config["lights"]["duration"];
+
+                    // TODO: Make loading in periods work
+                    const periods = data.config["lights"]["periods"];
+                    for (period in periods) {
+                        addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
+                    }
+
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
 
                     // Load UVC configuration
@@ -87,10 +102,23 @@
 
         function setConfig() {
             // Build new configuration
+            const periods = [];
+            const periodDivs = document.querySelectorAll('.time-period');
+
+            periodDivs.forEach(div => {
+                const startTime = div.querySelector('.start-time').value;
+                const endTime = div.querySelector('.end-time').value;
+                const active = div.dataset.active === "true";
+
+                if (startTime && endTime) {  // Only add if both times are set
+                    // periods.push({ start: startTime, end: endTime, active: active });
+                    periods.push({ start: startTime, end: endTime, active: active });
+                }
+            });
+
             const newConfig = {
                 lights: {
-                    time: document.getElementById("light_time").value,
-                    duration: parseFloat(document.getElementById("light_duration").value, 10),
+                    periods: periods,
                     brightness: parseInt(document.getElementById("light_brightness").value, 10)
                 },
                 uvc: {
@@ -110,6 +138,60 @@
                 .then(data => {
                     document.getElementById('ack').innerText = data.ack;
                 });
+        }
+
+        function addTimePeriod(startTime = null, endTime = null, active = true) {
+            // Create a new div to hold the start and end time inputs
+            const container = document.getElementById('timePeriodsContainer');
+            const periodDiv = document.createElement('div');
+            periodDiv.classList.add('time-period');
+
+            // Create start time input
+            const startTimeInput = document.createElement('input');
+            startTimeInput.type = 'time';
+            startTimeInput.classList.add('start-time');
+            // TODO: Does this work?
+            startTimeInput.value = startTime ? startTime : "";
+            startTimeInput.placeholder = "Start Time"
+
+            // Create end time input
+            const endTimeInput = document.createElement('input');
+            endTimeInput.type = 'time';
+            endTimeInput.classList.add('end-time');
+            // TODO: Does this work?
+            endTimeInput.value = endTime ? endTime : "";
+            endTimeInput.placeholder = 'End Time';
+
+            // Activate/Deactivate button
+            const toggleButton = document.createElement('button');
+            toggleButton.innerText = active ? 'Deactivate' : 'Activate';
+            toggleButton.onclick = function () {
+                const isActive = periodDiv.dataset.active === "true";
+                periodDiv.dataset.active = isActive ? "false" : "true";
+                toggleButton.innerText = isActive ? 'Activate' : 'Deactivate';
+                periodDiv.classList.toggle('active', !isActive);
+            };
+
+            // Create remove button
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Remove';
+            removeButton.onclick = function () {
+                container.removeChild(periodDiv);
+            };
+
+            // Append inputs and button to the period div
+            periodDiv.appendChild(startTimeInput);
+            periodDiv.appendChild(endTimeInput);
+            periodDiv.appendChild(toggleButton);
+            periodDiv.appendChild(removeButton);
+
+            // Append the period div to the main container
+            container.appendChild(periodDiv);
+
+            // // Set the active class if the period is active
+            // if (active) {
+            //     periodDiv.classList.add('active');
+            // }
         }
 
         function getTempAndPres() {

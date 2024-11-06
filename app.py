@@ -22,7 +22,6 @@ def get_config():
 
 @app.route("/set_config", methods=["POST"])
 def set_config():
-    # pressure = read_pressure.read_pressure()
     new_config = request.json.get("newConfig")
     print(f"new config: {new_config}")
     ack = configuration.set(new_config)

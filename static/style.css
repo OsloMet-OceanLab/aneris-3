@@ -60,3 +60,42 @@ input:checked+.slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+
+.time-period {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.time-period input {
+    margin-right: 5px;
+}
+
+.time-period button {
+    margin-left: 5px;
+    padding: 5px;
+}
+
+.time-period.active {
+    color: #e0ffe0;
+    /* Light green for active */
+}
+
+.time-period button.toggle {
+    background-color: #007bff;
+    /* Blue for toggle button */
+    color: white;
+}
+
+.time-period button.toggle:hover {
+    background-color: #0056b3;
+}
+
+.time-period button.remove {
+    background-color: red;
+    color: white;
+}
+
+.time-period button.remove:hover {
+    background-color: darkred;
+}

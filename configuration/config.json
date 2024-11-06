@@ -1,11 +1,16 @@
 {
     "lights": {
-        "time": "12:00",
-        "duration": 500,
-        "brightness": 20
+        "periods": [
+            {
+                "start": "12:10",
+                "end": "12:20",
+                "active": false
+            }
+        ],
+        "brightness": 100
     },
     "uvc": {
-        "time": "12:00",
-        "duration": 500
+        "time": "20:30",
+        "duration": 10
     }
 }

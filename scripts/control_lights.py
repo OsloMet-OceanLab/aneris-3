@@ -6,6 +6,7 @@ author: @rambech
 
 import gpiod as GPIO
 from time import sleep
+from datetime import datetime
 from scripts import configuration
 
 # Setup PWM pin
@@ -51,7 +52,12 @@ def test():
 
 def scheduled():
     while True:
-        if True:
-            on()
-        else:
-            off()
+        periods = configuration.get()["lights"]["periods"]
+        current_time = datetime.now().time()
+        # current_time_of_day = f"{current_time.hour}:{current_time.minute}"
+
+        for period in periods:
+            if (datetime(period["start"]) <= current_time <= datetime(period["end"])) and period["active"]:
+                on()
+            else:
+                off()
