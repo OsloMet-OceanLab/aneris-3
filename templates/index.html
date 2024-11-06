@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Aneris Control Panel</title>
+    <link rel="icon" href="/media/favicon.ico">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h1>Aneris Control Panel</h1>
+    <p>Temperature: <span id="temperature"></span></p>
+    <p>Pressure: <span id="pressure"></span></p>
+    <button onclick="getTempAndPres()">Update</button>
+
+    <!-- Relay control -->
+    <h2>Power Options</h2>
+    <h3>Reboot</h3>
+    <button style="cursor: pointer;" title="Turns of camera for 10 seconds" onclick="rebootCamera()">Reboot
+        camera</button><br>
+    <button style="cursor: pointer;" title="Turns of daisy chain for 10 seconds" onclick="rebootDaisy()">Reboot
+        daisy chain</button><br>
+
+    <h3>Relays</h3>
+    <label for="on_off_camera" style="cursor: pointer;"
+        title="Remember that when camera is off the relay solenoid is active">Camera :</label>
+    <label class="switch">
+        <input type="checkbox" id="on_off_camera" checked>
+        <span class="slider round"></span>
+    </label><br><br>
+
+    <label for="on_off_daisy" style="cursor: pointer;"
+        title="Remember that when daisy chain is off the relay solenoid is active">Daisy ON/OFF:</label>
+    <label class="switch">
+        <input type="checkbox" id="on_off_daisy" checked>
+        <span class="slider round"></span>
+    </label>
+
+    <!-- Configuration -->
+    <h2>Configuration</h2>
+
+    <!-- Lights configuration -->
+    <h3>Video Lights</h3>
+    <label for="light_time">Trigger time:</label>
+    <input type="time" id="light_time" name="light_time"><br>
+
+    <label for="light_duration">Duration:</label>
+    <input type="number" id="light_duration" name="light_duration"><br>
+
+    <label style="cursor: pointer;" title="Between 0 and 100" for="light_brightness">Brightness:</label>
+    <input type="number" id="light_brightness" name="light_brightness"><br>
+
+    <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="triggerLight()">Test
+        lights</button><br>
+
+
+    <!-- UVC configuration -->
+    <h3>UVC LED</h3>
+    <label for="uvc_time">Trigger time:</label>
+    <input type="time" id="uvc_time" name="uvc_time"><br>
+
+    <label for="uvc_duration">Duration:</label>
+    <input type="number" id="uvc_duration" name="uvc_duration"><br>
+
+    <button style="cursor: pointer;" title="Triggers UVC for 5 seconds" onclick="triggerUVC()">Test UVC</button><br>
+
+    <h3><button onclick="setConfig()">Save configuration</button></h3>
+    <p id="ack"></p>
+
+    <script>
+        function getConfig() {
+            fetch('/get_config')
+                .then(response => response.json())
+                .then(data => {
+                    // Load lights configuration
+                    document.getElementById('light_time').value = data.config["lights"]["time"];
+                    document.getElementById('light_duration').value = data.config["lights"]["duration"];
+                    document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
+
+                    // Load UVC configuration
+                    document.getElementById('uvc_time').value = data.config["uvc"]["time"];
+                    document.getElementById('uvc_duration').value = data.config["uvc"]["duration"];
+                })
+                .catch(error => console.error("Error loading data", error));
+        }
+
+        function setConfig() {
+            // Build new configuration
+            const newConfig = {
+                lights: {
+                    time: document.getElementById("light_time").value,
+                    duration: parseFloat(document.getElementById("light_duration").value, 10),
+                    brightness: parseInt(document.getElementById("light_brightness").value, 10)
+                },
+                uvc: {
+                    time: document.getElementById("uvc_time").value,
+                    duration: parseFloat(document.getElementById("uvc_duration").value, 10)
+                }
+            }
+
+            // Send new configuration
+            fetch('/set_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newConfig })
+
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ack').innerText = data.ack;
+                });
+        }
+
+        function getTempAndPres() {
+            fetch('/get_temp', { method: 'GET' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('temperature').innerText = data.temperature;
+                });
+
+            fetch('/get_pres', { method: 'GET' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('pressure').innerText = data.pressure;
+                });
+        }
+
+        function triggerLight() {
+            fetch('/trigger_light', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerText = data.result.message;
+                });
+        }
+
+        function triggerUVC() {
+            const test_param = confirm("WARNING, HARMFUL UVC LIGHT! Are you sure if you want to trigger UVC light for 5 seconds?");
+            fetch('/trigger_UVC', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test_param: test_param })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerText = data.result.message;
+                });
+        }
+
+        // Load config when config gets loaded
+        window.onload = getConfig;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{
+    "lights": {
+        "time": "12:00",
+        "duration": 500,
+        "brightness": 100
+    },
+    "uvc": {
+        "time": "12:00",
+        "duration": 500
+    },
+    "test_param": "3"
+}
