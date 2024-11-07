@@ -6,7 +6,7 @@ import gpiod as GPIO
 from time import sleep
 
 # Setup PWM pin
-UVC_pin = 13
+UVC_pin = 25
 chip = GPIO.Chip('gpiochip4')
 uvc_line = chip.get_line(UVC_pin)
 
