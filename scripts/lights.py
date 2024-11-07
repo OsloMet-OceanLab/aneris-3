@@ -6,7 +6,8 @@ author: @rambech
 
 import gpiod as GPIO
 from time import sleep
-from datetime import datetime
+from lib import utils
+import datetime
 from scripts import configuration
 
 # Setup PWM pin
@@ -32,8 +33,16 @@ def on():
         sleep(on_period)
         led_line.set_value(0)
         sleep(off_period)
+    except OSError:
+        print("Not able to access GPIO")
+        pass
     finally:
-        led_line.set_value(0)
+        # Only try to turn off again if led_line is registered
+        try:
+            led_line.set_value(0)
+        except:
+            pass
+
         led_line.release()
 
 
@@ -41,7 +50,16 @@ def off():
     try:
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(0)
+    except OSError:
+        print("Not able to access GPIO")
+        pass
     finally:
+        # Only try to turn off again if led_line is registered
+        try:
+            led_line.set_value(0)
+        except:
+            pass
+
         led_line.release()
 
 
@@ -62,13 +80,22 @@ def test():
 
 
 def scheduled():
+    string_periods = configuration.get()["lights"]["periods"]
+    periods = []
+
+    # Convert periods from string to datetime.time objects
+    for string_period in string_periods:
+        start = utils.string2datetime(string_period["start"])
+        end = utils.string2datetime(string_period["end"])
+
+        period = {"start": start, "end": end, "active": string_period["active"]}
+        periods.append(period)
+        
     while True:
-        periods = configuration.get()["lights"]["periods"]
-        current_time = datetime.now().time()
-        # current_time_of_day = f"{current_time.hour}:{current_time.minute}"
+        current_time = datetime.datetime.now().time()
 
         for period in periods:
-            if (datetime(period["start"]) <= current_time <= datetime(period["end"])) and period["active"]:
+            if (period["start"] <= current_time <= period["end"]) and period["active"]:
                 on()
             else:
                 off()

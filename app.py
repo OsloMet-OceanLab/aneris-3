@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify
-from scripts import control_lights, uvc, configuration, relay # sensors
+from scripts import lights, uvc, configuration, relay # sensors
+import threading
 
 
 
 app = Flask(__name__)
-
 
 @app.route("/")
 def index():
@@ -34,13 +34,35 @@ def set_config():
     return jsonify(ack=ack)
 
 
+@app.route("/restart_light", methods=["POST"])
+def restart_light():
+    """
+    Restart video lights after a new configuration has been set
+    """
+
+    print("Restart light")
+    ack =  lights.scheduled()
+
+    return jsonify(ack)
+
+@app.route("/restart_uvc", methods=["POST"])
+def restart_uvc():
+    """
+    Restart video lights after a new configuration has been set
+    """
+
+    ack =  uvc.scheduled()
+
+    return jsonify(ack)
+
+
 @app.route("/test_light", methods=["POST"])
 def test_light():
     """
     Test video lights
     """
 
-    ack =  control_lights.test()
+    ack =  lights.test()
 
     return jsonify(ack)
 
@@ -127,4 +149,5 @@ def get_pres():
 
 
 if __name__ == "__main__":
+    start_light_thread()
     app.run(debug=True)

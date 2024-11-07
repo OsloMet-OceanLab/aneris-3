@@ -3,19 +3,19 @@
     "lights": {
         "periods": [
             {
-                "start": "12:30",
-                "end": "12:40",
+                "start": "17:33",
+                "end": "18:30",
                 "active": false
             },
             {
-                "start": "12:10",
-                "end": "12:40",
+                "start": "18:10",
+                "end": "19:00",
                 "active": false
             },
             {
-                "start": "13:20",
-                "end": "12:30",
-                "active": false
+                "start": "19:00",
+                "end": "20:20",
+                "active": true
             }
         ],
         "brightness": 100

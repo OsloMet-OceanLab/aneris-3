@@ -88,7 +88,7 @@
                     periods.forEach(period => {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
                     });
-                    document.getElementById("reset_time").value = data.config["reset_time"]
+                    document.getElementById("reset_time").value = data.config["reset_time"];
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
 
                     // Load UVC configuration
@@ -136,6 +136,33 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('ack').innerText = data.ack;
+                    // Restart video lights and uvc after setting configuration
+                    restart_light();
+                    restart_uvc();
+                })
+        }
+
+        function restart_light() {
+            // Restart video lights 
+            fetch('/restart_light', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ack').innerText = data.ack;
+                });
+        }
+
+        function restart_uvc() {
+            // Restart UVC
+            fetch('/restart_uvc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ack').innerText = data.ack;
                 });
         }
 
@@ -169,6 +196,7 @@
                 periodDiv.dataset.active = isActive ? "false" : "true";
                 toggleButton.innerText = isActive ? 'Activate' : 'Deactivate';
                 periodDiv.classList.toggle('active', !isActive);
+                restart_light();
             };
 
             // Create remove button

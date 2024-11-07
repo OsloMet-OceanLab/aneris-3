@@ -33,3 +33,7 @@ def test():
     finally:
         off()
         print("UVC light off")
+
+
+def scheduled():
+    pass
