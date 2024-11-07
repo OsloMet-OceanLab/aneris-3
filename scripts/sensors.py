@@ -1,7 +1,7 @@
-import kellerLD
+from lib import KellerLD
 import time
 
-bar100_sensor = kellerLD.KellerLD()
+bar100_sensor = KellerLD()
 
 try:
     bar100_sensor.init()
@@ -13,7 +13,6 @@ except OSError:
 
 if not use_bar100_sensor:
     print("No blue robotics pressure sensors connected")
-    exit(1)
 
 
 def read_temperature():

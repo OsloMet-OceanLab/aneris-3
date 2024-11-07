@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-# from scripts import read_pressure, control_lights
-from scripts import configuration  # , relay
+# from scripts import sensors, control_lights, uvc, configuration, relay
+from scripts import control_lights
 from tests import tests
+
+
 
 app = Flask(__name__)
 
@@ -33,6 +35,22 @@ def set_config():
     ack = configuration.set(new_config)
     return jsonify(ack=ack)
 
+@app.route("/test_light", methods=["POST"])
+def test_light():
+    """
+    Test video lights
+    """
+
+    control_lights.test()
+
+@app.route("/test_UVC", methods=["POST"])
+def test_UVC():
+    """
+    Test UVC anti-biofouling light
+    """
+
+    uvc.test()
+
 
 @app.route("/set_camera_relay", methods=["POST"])
 def set_camera_relay():
@@ -40,10 +58,10 @@ def set_camera_relay():
     Toggle camera relay
     """
 
-    # camera_relay_state = request.json.get("camera_relay_state")
-    # print(f"camera_relay_state: {camera_relay_state}")
-    # verify_camera_state = relay.toggle_camera(camera_relay_state)
-    # return jsonify(verify_camera_state=verify_camera_state)
+    camera_relay_state = request.json.get("camera_relay_state")
+    print(f"camera_relay_state: {camera_relay_state}")
+    verify_camera_state = relay.toggle_camera(camera_relay_state)
+    return jsonify(verify_camera_state=verify_camera_state)
 
 
 @app.route("/set_daisy_relay", methods=["POST"])
@@ -52,10 +70,10 @@ def set_daisy_relay():
     Toggle daisy relay
     """
 
-    # daisy_relay_state = request.json.get("daisy_relay_state")
-    # print(f"camera_daisy_state: {daisy_relay_state}")
-    # verify_daisy_state = relay.toggle_camera(daisy_relay_state)
-    # return jsonify(verify_camera_state=verify_daisy_state)
+    daisy_relay_state = request.json.get("daisy_relay_state")
+    print(f"camera_daisy_state: {daisy_relay_state}")
+    verify_daisy_state = relay.toggle_camera(daisy_relay_state)
+    return jsonify(verify_camera_state=verify_daisy_state)
 
 
 @app.route("/get_temp", methods=["GET"])

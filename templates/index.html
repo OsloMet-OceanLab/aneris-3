@@ -57,7 +57,7 @@
 
     <p id="time_period_ack"></p> <!-- Display result -->
 
-    <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="triggerLight()">Test
+    <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="testLight()">Test
         lights</button><br>
 
 
@@ -69,7 +69,7 @@
     <label for="uvc_duration">Duration:</label>
     <input type="number" id="uvc_duration" name="uvc_duration"><br>
 
-    <button style="cursor: pointer;" title="Triggers UVC for 5 seconds" onclick="triggerUVC()">Test UVC</button><br>
+    <button style="cursor: pointer;" title="Triggers UVC for 5 seconds" onclick="testUVC()">Test UVC</button><br>
 
     <h3><button onclick="setConfig()">Save configuration</button></h3>
     <p id="ack"></p>
@@ -205,8 +205,8 @@
                 });
         }
 
-        function triggerLight() {
-            fetch('/trigger_light', {
+        function testLight() {
+            fetch('/test_light', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             })
@@ -216,9 +216,9 @@
                 });
         }
 
-        function triggerUVC() {
+        function testUVC() {
             const test_param = confirm("WARNING, HARMFUL UVC LIGHT! Are you sure if you want to trigger UVC light for 5 seconds?");
-            fetch('/trigger_UVC', {
+            fetch('/test_UVC', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ test_param: test_param })

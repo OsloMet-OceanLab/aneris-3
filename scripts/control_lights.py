@@ -22,7 +22,7 @@ MAX_PERIOD = 1900 * 1e-6     # 1900 microseconds
 MIN_PERIOD = 1100 * 1e-6     # 1100 microseconds
 
 
-def on():
+def on(led_line):
     brightness = configuration.get()["lights"]["brightness"]
     on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
     off_period = PWM_PERIOD - on_period
@@ -33,7 +33,7 @@ def on():
     sleep(off_period)
 
 
-def off():
+def off(led_line):
     led_line.set_value(0)
     led_line.release()
 
