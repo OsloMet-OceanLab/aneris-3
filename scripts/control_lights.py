@@ -10,7 +10,7 @@ from datetime import datetime
 from scripts import configuration
 
 # Setup PWM pin
-PWM_pin = 18
+PWM_pin = 12
 chip = GPIO.Chip('gpiochip4')
 led_line = chip.get_line(PWM_pin)
 led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
