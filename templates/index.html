@@ -9,10 +9,12 @@
 </head>
 
 <body>
-    <h1>Aneris Control Panel</h1>
-    <p>Temperature: <span id="temperature"></span></p>
+    <h1>Aneris EMUAS Control Panel</h1>
+
+    <!-- Not implemented -->
+    <!-- <p>Temperature: <span id="temperature"></span></p>
     <p>Pressure: <span id="pressure"></span></p>
-    <button onclick="getTempAndPres()">Update</button>
+    <button onclick="getTempAndPres()">Update</button> -->
 
     <!-- Relay control -->
     <h2>Power Options</h2>
@@ -83,9 +85,9 @@
 
                     // TODO: Make loading in periods work
                     const periods = data.config["lights"]["periods"];
-                    for (period in periods) {
+                    periods.forEach(period => {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
-                    }
+                    });
                     document.getElementById("reset_time").value = data.config["reset_time"]
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
 
@@ -113,7 +115,7 @@
             });
 
             const newConfig = {
-                reset_time: document.getElementById("reset_time").value,
+                reset_time: parseFloat(document.getElementById("reset_time").value, 10),
                 lights: {
                     periods: periods,
                     brightness: parseInt(document.getElementById("light_brightness").value, 10)
@@ -202,6 +204,28 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('pressure').innerText = data.pressure;
+                });
+        }
+
+        function rebootCamera() {
+            fetch('/reboot_camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('verify_camera_reboot').innerText = data.verify_camera_reboot;
+                });
+        }
+
+        function rebootDaisy() {
+            fetch('/reboot_daisy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('verify_daisy_reboot').innerText = data.verify_daisy_reboot;
                 });
         }
 

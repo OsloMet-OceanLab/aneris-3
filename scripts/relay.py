@@ -1,5 +1,6 @@
 import gpiod as GPIO
 from time import sleep
+from scripts import configuration
 
 # TODO: Add reset time to config
 reset_time = 200
@@ -8,45 +9,66 @@ reset_time = 200
 DAISY_PIN = 15
 chip = GPIO.Chip('gpiochip4')
 daisy_line = chip.get_line(DAISY_PIN)
-daisy_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
 
 CAMERA_PIN = 14
 chip = GPIO.Chip('gpiochip4')
 camera_line = chip.get_line(CAMERA_PIN)
-camera_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
-
-
-def reset_daisy():
-    daisy_line.set_value(1)
-    sleep(reset_time)
-    daisy_line.set_value(0)
-
-
-def reset_camera():
-    camera_line.set_value(1)
-    sleep(reset_time)
-    camera_line.set_value(0)
-
 
 def daisy_on():
-    daisy_line.set_value(0)
-    daisy_line.release()
+    # Daisy is connected to normally closed
+    try:
+        daisy_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        daisy_line.set_value(0)
+    finally:
+        daisy_line.release()
 
 
 def camera_on():
-    camera_line.set_value(0)
-    camera_line.release()
+    # Camera is also connected to normally closed
+    try:
+        camera_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        camera_line.set_value(0)
+    finally:
+        camera_line.release()
 
 
 def daisy_off():
-    daisy_line.set_value(1)
-    daisy_line.release()
+    try:
+        daisy_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        daisy_line.set_value(1)
+    finally:
+        daisy_line.release()
 
 
 def camera_off():
-    camera_line.set_value(1)
-    camera_line.release()
+    try:
+        camera_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        camera_line.set_value(1)
+    finally:
+        camera_line.release()
 
+
+def reboot_daisy():
+    try: 
+        reset_time = configuration.get()["reset_time"]
+    except:
+        reset_time = 10
+        
+    daisy_off()
+    sleep(reset_time)
+    daisy_on()
+
+
+def reboot_camera():
+    try: 
+        reset_time = configuration.get()["reset_time"]
+    except:
+        reset_time = 10
+
+    camera_off()
+    sleep(reset_time)
+    camera_on()
+    
 
 def toggle_camera(on):
     if not on:
@@ -54,4 +76,12 @@ def toggle_camera(on):
         return False
     else:
         camera_on()
+        return True
+
+def toggle_daisy(on):
+    if not on:
+        daisy_off()
+        return False
+    else:
+        daisy_on()
         return True

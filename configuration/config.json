@@ -1,9 +1,20 @@
 {
+    "reset_time": 2,
     "lights": {
         "periods": [
             {
+                "start": "12:30",
+                "end": "12:40",
+                "active": false
+            },
+            {
                 "start": "12:10",
-                "end": "12:20",
+                "end": "12:40",
+                "active": false
+            },
+            {
+                "start": "13:20",
+                "end": "12:30",
                 "active": false
             }
         ],

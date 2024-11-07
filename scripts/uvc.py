@@ -9,18 +9,25 @@ from time import sleep
 UVC_pin = 13
 chip = GPIO.Chip('gpiochip4')
 uvc_line = chip.get_line(UVC_pin)
-uvc_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
 
 def on():
-    uvc_line.set_value(1)
+    try:
+        uvc_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        uvc_line.set_value(1)
+    finally:
+        uvc_line.release()
 
 def off():
-    uvc_line.set_value(0)
-    uvc_line.release()
+    try:
+        uvc_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+        uvc_line.set_value(0)
+    finally:
+        uvc_line.release()
 
 def test():
     try:
-        print("UVC light on!")
+        # print("UVC light on!")
+        yield "UVC light on"
         on()
         sleep(5)
     finally:

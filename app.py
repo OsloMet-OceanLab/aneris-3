@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-# from scripts import sensors, control_lights, uvc, configuration, relay
-from scripts import control_lights
-from tests import tests
+from scripts import control_lights, uvc, configuration, relay # sensors
 
 
 
@@ -35,13 +33,17 @@ def set_config():
     ack = configuration.set(new_config)
     return jsonify(ack=ack)
 
+
 @app.route("/test_light", methods=["POST"])
 def test_light():
     """
     Test video lights
     """
 
-    control_lights.test()
+    ack =  control_lights.test()
+
+    return jsonify(ack)
+
 
 @app.route("/test_UVC", methods=["POST"])
 def test_UVC():
@@ -49,7 +51,31 @@ def test_UVC():
     Test UVC anti-biofouling light
     """
 
-    uvc.test()
+    ack = uvc.test()
+
+    return ack
+
+
+@app.route("/reboot_camera", methods=["POST"])
+def reboot_camera():
+    """
+    Reboot camera
+    """
+
+    print("Reboot camera")
+    verify_camera_reboot = relay.reboot_camera()
+    return jsonify(verify_camera_reboot=verify_camera_reboot)
+
+
+@app.route("/reboot_daisy", methods=["POST"])
+def reboot_daisy():
+    """
+    Reboot daisy
+    """
+
+    print("Reboot daisy chain")
+    verify_daisy_reboot = relay.reboot_daisy()
+    return jsonify(verify_daisy_reboot=verify_daisy_reboot)
 
 
 @app.route("/set_camera_relay", methods=["POST"])
@@ -72,8 +98,8 @@ def set_daisy_relay():
 
     daisy_relay_state = request.json.get("daisy_relay_state")
     print(f"camera_daisy_state: {daisy_relay_state}")
-    verify_daisy_state = relay.toggle_camera(daisy_relay_state)
-    return jsonify(verify_camera_state=verify_daisy_state)
+    verify_daisy_state = relay.toggle_daisy(daisy_relay_state)
+    return jsonify(verify_daisy_state=verify_daisy_state)
 
 
 @app.route("/get_temp", methods=["GET"])
@@ -82,9 +108,10 @@ def get_temp():
     Get temperature outside enclosure
     """
 
-    # temperature = sensors.read_temperature()
-    temperature = 1
-    return jsonify(temperature=temperature)
+    # temperature = sensors.read_temperature
+    # return jsonify(temperature)
+
+    raise NotImplementedError
 
 
 @app.route("/get_pres", methods=["GET"])
@@ -94,9 +121,9 @@ def get_pres():
     """
 
     # pressure = sensors.read_pressure()
-    pressure = 2
-    print(pressure)
-    return jsonify(pressure=pressure)
+    # return jsonify(pressure=pressure)
+
+    raise NotImplementedError
 
 
 if __name__ == "__main__":
