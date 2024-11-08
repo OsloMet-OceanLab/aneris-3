@@ -4,15 +4,40 @@
         "periods": [
             {
                 "start": "19:00",
-                "end": "20:20"
+                "end": "20:20",
+                "active": false
+            },
+            {
+                "start": "12:12",
+                "end": "12:30",
+                "active": false
+            },
+            {
+                "start": "13:00",
+                "end": "14:00",
+                "active": false
+            },
+            {
+                "start": "16:50",
+                "end": "18:00",
+                "active": false
             }
         ],
         "brightness": 100
     },
     "uvc": {
-        "time": "02:00",
-        "duration": 300,
-        "duty_cycle": 0.0417,
-        "period": 60
+        "periods": [
+            {
+                "start": "14:00",
+                "end": "15:00",
+                "active": false
+            },
+            {
+                "start": "16:48",
+                "end": "20:00",
+                "active": false
+            }
+        ],
+        "duty_cycle": 100
     }
 }

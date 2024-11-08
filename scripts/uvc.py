@@ -4,6 +4,8 @@ author: @rambech
 
 import gpiod as GPIO
 from time import sleep
+from numpy import around
+from datetime import datetime
 from scripts import configuration
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -41,23 +43,29 @@ def test():
         print("UVC light off")
 
 
-def scheduled():
+def schedule(scheduler: BackgroundScheduler):
     """
     Enables schedules runtime for the lights
     """
     
     CONFIG = configuration.get()["uvc"]
     
-    start_time = CONFIG["time"]
-    start_hour, start_min = start_time.split(":")
-    duration = CONFIG["duration"]
-    duty_cycle = CONFIG["duty_cycle"]
-    period = CONFIG["period"]
+    time_format = "%H:%M"
+    # Bound duty cycle to [0, 100] and normalise to 1
+    duty_cycle = min(max(0, CONFIG["duty_cycle"]), 100)/100
+    uvc_periods = [period for period in CONFIG["periods"] if period["active"]]
+    period = 60
+    on_time = duty_cycle * 2.5
+    off_time = period - on_time
 
-    def run_uvc():
-        on_time = period * duty_cycle
-        off_time = period - on_time
-        repeat = duration / period
+    print(f"on_time: {on_time}")
+    print(f"off_time: {off_time}")
+
+    print("In uvc")
+
+    def run_uvc(duration):
+        repeat = around(duration / period, 0)
+        print(f"repeat: {repeat}")
 
         while repeat > 0:
             on()
@@ -66,8 +74,16 @@ def scheduled():
             sleep(off_time)
             repeat -= 1
 
-    scheduler = BackgroundScheduler()
-    scheduler.configure(timezone=utc)
-    scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min)
+    for uvc_period in uvc_periods:
+        start_time = uvc_period["start"]
+        end_time = uvc_period["end"]
+        start_hour, start_min = start_time.split(":")
 
-    scheduler.start()
+        start = datetime.strptime(start_time, time_format)
+        end = datetime.strptime(end_time, time_format)
+        temp = end - start
+        duration = temp.total_seconds()
+        print(f"duration: {duration}")
+
+        # scheduler.add_job(run_uvc(duration), trigger='cron', hour=start_hour, minute=start_min)
+        scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration])

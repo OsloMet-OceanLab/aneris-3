@@ -1,10 +1,21 @@
 from flask import Flask, render_template, request, jsonify
 from scripts import lights, uvc, configuration, relay # sensors
-import threading
+from pytz import utc
+from apscheduler.schedulers.background import BackgroundScheduler
 
-
+scheduler = BackgroundScheduler()
+scheduler.configure(timezone=utc)
 
 app = Flask(__name__)
+
+def schedule():
+    if scheduler.running:
+        scheduler.remove_all_jobs()
+
+    lights.schedule(scheduler)
+    uvc.schedule(scheduler)
+
+    scheduler.start()
 
 @app.route("/")
 def index():
@@ -33,27 +44,39 @@ def set_config():
     ack = configuration.set(new_config)
     return jsonify(ack=ack)
 
-
-@app.route("/restart_light", methods=["POST"])
-def restart_light():
+@app.route("/restart_schedule", methods=["POST"])
+def restart_schedule():
     """
     Restart video lights after a new configuration has been set
     """
 
-    print("Restart light")
-    ack =  lights.scheduled()
+    print("Restart schedule")
+    schedule()
+    res = {"message": "Shedule restarted"}
 
-    return jsonify(ack)
+    return jsonify(res=res)
 
-@app.route("/restart_uvc", methods=["POST"])
-def restart_uvc():
-    """
-    Restart video lights after a new configuration has been set
-    """
+# @app.route("/restart_light", methods=["POST"])
+# def restart_light():
+#     """
+#     Restart video lights after a new configuration has been set
+#     """
 
-    ack =  uvc.scheduled()
+#     print("Restart light")
+#     ack =  lights.scheduled()
 
-    return jsonify(ack)
+#     return jsonify(ack)
+
+
+# @app.route("/restart_uvc", methods=["POST"])
+# def restart_uvc():
+#     """
+#     Restart video lights after a new configuration has been set
+#     """
+
+#     ack =  uvc.scheduled()
+
+#     return jsonify(ack)
 
 
 @app.route("/test_light", methods=["POST"])
@@ -149,5 +172,4 @@ def get_pres():
 
 
 if __name__ == "__main__":
-    start_light_thread()
     app.run(debug=True)

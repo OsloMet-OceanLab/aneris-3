@@ -6,9 +6,10 @@ author: @rambech
 
 import gpiod as GPIO
 from time import sleep
-from lib import utils
-import datetime
+from numpy import around
+from datetime import datetime
 from scripts import configuration
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Setup PWM pin
 PWM_pin = 12
@@ -22,56 +23,77 @@ MAX_PERIOD = 1900 * 1e-6     # 1900 microseconds
 MIN_PERIOD = 1100 * 1e-6     # 1100 microseconds
 
 
+# def on():
+#     try:
+#         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+#         brightness = configuration.get()["lights"]["brightness"]
+#         on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
+#         off_period = PWM_PERIOD - on_period
+
+#         led_line.set_value(1)
+#         sleep(on_period)
+#         led_line.set_value(0)
+#         sleep(off_period)
+#     except OSError:
+#         print("Not able to access GPIO")
+#         pass
+#     finally:
+#         # Only try to turn off again if led_line is registered
+#         try:
+#             led_line.set_value(0)
+#         except:
+#             pass
+
+#         led_line.release()
+
+
+# def off():
+#     try:
+#         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
+#         led_line.set_value(0)
+#     except OSError:
+#         print("Not able to access GPIO")
+#         pass
+#     finally:
+#         # Only try to turn off again if led_line is registered
+#         try:
+#             led_line.set_value(0)
+#         except:
+#             pass
+
+#         led_line.release()
+
 def on():
     try:
+        print("Lights on")
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
-        brightness = configuration.get()["lights"]["brightness"]
-        on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
-        off_period = PWM_PERIOD - on_period
-
         led_line.set_value(1)
-        sleep(on_period)
-        led_line.set_value(0)
-        sleep(off_period)
-    except OSError:
-        print("Not able to access GPIO")
-        pass
     finally:
-        # Only try to turn off again if led_line is registered
-        try:
-            led_line.set_value(0)
-        except:
-            pass
-
         led_line.release()
 
 
 def off():
     try:
+        print("Lights off")
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(0)
-    except OSError:
-        print("Not able to access GPIO")
-        pass
     finally:
-        # Only try to turn off again if led_line is registered
-        try:
-            led_line.set_value(0)
-        except:
-            pass
-
         led_line.release()
-
 
 
 def test():
     seconds = 5
     times = seconds * PWM_FREQUENCY
+    on_period = MAX_PERIOD
+    off_period = PWM_PERIOD - on_period
 
     try:
         print("Lights on")
         for _ in range(times):
             on()
+            sleep(on_period)
+            off()
+            sleep(off_period)
     finally:
         print("Lights off")
         off()
@@ -79,26 +101,43 @@ def test():
     return {"message": "Lights tested"}
 
 
-def scheduled():
+def schedule(scheduler: BackgroundScheduler):
     """
     Enables schedules runtime for the lights
     """
     
     CONFIG = configuration.get()["lights"]
 
-    periods = CONFIG["periods"]
+    time_format = "%H:%M"
+    brightness = min(max(0, CONFIG["brightness"]), 100)/100
+    # Get only active periods
+    light_periods = [period for period in CONFIG["periods"] if period["active"]]
+    on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
+    off_period = PWM_PERIOD - on_period
 
-    scheduler = BackgroundScheduler()
-    scheduler.configure(timezone=utc)
+    print(f"on_time: {on_period}")
+    print(f"off_time: {off_period}")
+
+    def run_lights(duration):
+        repeat = around(duration / PWM_PERIOD, 0)
+        print(f"repeat: {repeat}")
+
+        while repeat > 0:
+            on()
+            sleep(on_period)
+            off()
+            sleep(off_period)
+            repeat -= 1
     
-    for period in periods:
-        start_time = period["start"]
+    for light_period in light_periods:
+        start_time = light_period["start"]
+        end_time = light_period["end"]
         start_hour, start_min = start_time.split(":")
 
-        end_time = period["end"]
-        end_hour, end_min = start_time.split(":")
+        start = datetime.strptime(start_time, time_format)
+        end = datetime.strptime(end_time, time_format)
+        temp = end - start
+        duration = temp.total_seconds()
+        print(f"duration: {duration}")
 
-        scheduler.add_job(on, trigger='cron', hour=start_hour, minute=start_min)
-        scheduler.add_job(off, trigger="cron", hour=end_hour, minute=end_min)
-
-    scheduler.start()
+        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration])

@@ -20,10 +20,11 @@
     <h2>Power Options</h2>
     <h3>Reboot</h3>
     <label style="cursor: pointer;" title="Remember to save config" for="reset_time">Reset time:</label>
-    <input type="number" id="reset_time" name="reset_time"> seconds<br>
-    <button style="cursor: pointer;" title="Turns of camera for 10 seconds" onclick="rebootCamera()">Reboot
+    <input type="number" id="reset_time" name="reset_time" min="0" max="1000"> seconds<br>
+    <button style="cursor: pointer;" title="Turns of camera for a time set by rest time" onclick="rebootCamera()">Reboot
         camera</button><br>
-    <button style="cursor: pointer;" title="Turns of daisy chain for 10 seconds" onclick="rebootDaisy()">Reboot
+    <button style="cursor: pointer;" title="Turns of daisy chain for a time set by rest time"
+        onclick="rebootDaisy()">Reboot
         daisy chain</button><br>
 
     <h3>Relays</h3>
@@ -47,29 +48,36 @@
     <!-- Lights configuration -->
     <h3>Video Lights</h3>
     <label style="cursor: pointer;" title="Between 0 and 100" for="light_brightness">Brightness:</label>
-    <input type="number" id="light_brightness" name="light_brightness"><br>
+    <input type="number" id="light_brightness" name="light_brightness" min="0" max="100"><br>
 
     <!-- Container for dynamic time period inputs -->
-    <label for="timePeriodsContainer">Light timetable</label>
+    <label for=" timePeriodsContainer">Light timetable</label>
     <div id="timePeriodsContainer"></div>
 
     <!-- Buttons to add and submit time periods -->
     <button onclick="addTimePeriod()">Add Time Period</button>
-    <button onclick="setTimePeriods()">Update Time Periods</button>
 
     <p id="time_period_ack"></p> <!-- Display result -->
 
+    <!-- Light trigger -->
     <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="testLight()">Test
         lights</button><br>
 
 
     <!-- UVC configuration -->
     <h3>UVC LED</h3>
-    <label for="uvc_time">Trigger time:</label>
+    <!-- <label for="uvc_time">Trigger time:</label>
     <input type="time" id="uvc_time" name="uvc_time"><br>
 
     <label for="uvc_duration">Duration:</label>
-    <input type="number" id="uvc_duration" name="uvc_duration"><br>
+    <input type="number" id="uvc_duration" name="uvc_duration"><br> -->
+    <label style="cursor: pointer;" title="Between 0 and 100" for="duty_cycle">Duty Cycle:</label>
+    <input type="number" id="duty_cycle" name="duty_cycle" min="0" max="100"><br>
+
+    <!-- UVC Timetable -->
+    <label for="uvcTimePeriodsContainer">UVC timetable</label>
+    <div id="uvcTimePeriodsContainer"></div>
+    <button onclick="addUVCTimePeriod()">Add Time Period</button><br>
 
     <button style="cursor: pointer;" title="Triggers UVC for 5 seconds" onclick="testUVC()">Test UVC</button><br>
 
@@ -83,7 +91,6 @@
                 .then(data => {
                     // Load lights configuration
 
-                    // TODO: Make loading in periods work
                     const periods = data.config["lights"]["periods"];
                     periods.forEach(period => {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
@@ -92,14 +99,17 @@
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
 
                     // Load UVC configuration
-                    document.getElementById('uvc_time').value = data.config["uvc"]["time"];
-                    document.getElementById('uvc_duration').value = data.config["uvc"]["duration"];
+                    const uvcPeriods = data.config["uvc"]["periods"];
+                    uvcPeriods.forEach(period => {
+                        addUVCTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
+                    });
+                    document.getElementById('duty_cycle').value = data.config["uvc"]["duty_cycle"];
                 })
                 .catch(error => console.error("Error loading data", error));
         }
 
         function setConfig() {
-            // Build new configuration
+            // Make list of dicts with light time periods
             const periods = [];
             const periodDivs = document.querySelectorAll('.time-period');
 
@@ -109,11 +119,25 @@
                 const active = div.dataset.active === "true";
 
                 if (startTime && endTime) {  // Only add if both times are set
-                    // periods.push({ start: startTime, end: endTime, active: active });
                     periods.push({ start: startTime, end: endTime, active: active });
                 }
             });
 
+            // Make list of dicts with UVC time periods
+            const uvcPeriods = [];
+            const uvcPeriodDivs = document.querySelectorAll('.uvc-time-period');
+
+            uvcPeriodDivs.forEach(div => {
+                const uvcStartTime = div.querySelector('.uvc-start-time').value;
+                const uvcEndTime = div.querySelector('.uvc-end-time').value;
+                const uvcActive = div.dataset.active === "true";
+
+                if (uvcStartTime && uvcEndTime) {  // Only add if both times are set
+                    uvcPeriods.push({ start: uvcStartTime, end: uvcEndTime, active: uvcActive });
+                }
+            });
+
+            // Build new configuration
             const newConfig = {
                 reset_time: parseFloat(document.getElementById("reset_time").value, 10),
                 lights: {
@@ -121,8 +145,8 @@
                     brightness: parseInt(document.getElementById("light_brightness").value, 10)
                 },
                 uvc: {
-                    time: document.getElementById("uvc_time").value,
-                    duration: parseFloat(document.getElementById("uvc_duration").value, 10)
+                    periods: uvcPeriods,
+                    duty_cycle: parseInt(document.getElementById("duty_cycle").value, 10),
                 }
             }
 
@@ -137,34 +161,47 @@
                 .then(data => {
                     document.getElementById('ack').innerText = data.ack;
                     // Restart video lights and uvc after setting configuration
-                    restart_light();
-                    restart_uvc();
+                    // restart_light();
+                    // restart_uvc();
+                    restart_schedule();
                 })
         }
 
-        function restart_light() {
+        function restart_schedule() {
             // Restart video lights 
-            fetch('/restart_light', {
+            fetch('/restart_schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('ack').innerText = data.ack;
+                    document.getElementById('res').innerText = data.res.message;
                 });
         }
 
-        function restart_uvc() {
-            // Restart UVC
-            fetch('/restart_uvc', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('ack').innerText = data.ack;
-                });
-        }
+        // function restart_light() {
+        //     // Restart video lights 
+        //     fetch('/restart_light', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' }
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             document.getElementById('ack').innerText = data.ack;
+        //         });
+        // }
+
+        // function restart_uvc() {
+        //     // Restart UVC
+        //     fetch('/restart_uvc', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' }
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             document.getElementById('ack').innerText = data.ack;
+        //         });
+        // }
 
         function addTimePeriod(startTime = null, endTime = null, active = true) {
             // Create a new div to hold the start and end time inputs
@@ -176,7 +213,6 @@
             const startTimeInput = document.createElement('input');
             startTimeInput.type = 'time';
             startTimeInput.classList.add('start-time');
-            // TODO: Does this work?
             startTimeInput.value = startTime ? startTime : "";
             startTimeInput.placeholder = "Start Time"
 
@@ -184,7 +220,59 @@
             const endTimeInput = document.createElement('input');
             endTimeInput.type = 'time';
             endTimeInput.classList.add('end-time');
-            // TODO: Does this work?
+            endTimeInput.value = endTime ? endTime : "";
+            endTimeInput.placeholder = 'End Time';
+
+            // Activate/Deactivate button
+            const toggleButton = document.createElement('button');
+            toggleButton.innerText = active ? 'Deactivate' : 'Activate';
+            toggleButton.onclick = function () {
+                const isActive = periodDiv.dataset.active === "true";
+                periodDiv.dataset.active = isActive ? "false" : "true";
+                toggleButton.innerText = isActive ? 'Activate' : 'Deactivate';
+                periodDiv.classList.toggle('active', !isActive);
+                restart_light();
+            };
+
+            // Create remove button
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Remove';
+            removeButton.onclick = function () {
+                container.removeChild(periodDiv);
+            };
+
+            // Append inputs and button to the period div
+            periodDiv.appendChild(startTimeInput);
+            periodDiv.appendChild(endTimeInput);
+            periodDiv.appendChild(toggleButton);
+            periodDiv.appendChild(removeButton);
+
+            // Append the period div to the main container
+            container.appendChild(periodDiv);
+
+            // // Set the active class if the period is active
+            // if (active) {
+            //     periodDiv.classList.add('active');
+            // }
+        }
+
+        function addUVCTimePeriod(startTime = null, endTime = null, dutyCycle = null, active = true) {
+            // Create a new div to hold the start and end time inputs
+            const container = document.getElementById('uvcTimePeriodsContainer');
+            const periodDiv = document.createElement('div');
+            periodDiv.classList.add('uvc-time-period');
+
+            // Create start time input
+            const startTimeInput = document.createElement('input');
+            startTimeInput.type = 'time';
+            startTimeInput.classList.add('uvc-start-time');
+            startTimeInput.value = startTime ? startTime : "";
+            startTimeInput.placeholder = "Start Time"
+
+            // Create end time input
+            const endTimeInput = document.createElement('input');
+            endTimeInput.type = 'time';
+            endTimeInput.classList.add('uvc-end-time');
             endTimeInput.value = endTime ? endTime : "";
             endTimeInput.placeholder = 'End Time';
 
