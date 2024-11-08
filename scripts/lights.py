@@ -80,22 +80,25 @@ def test():
 
 
 def scheduled():
-    string_periods = configuration.get()["lights"]["periods"]
-    periods = []
+    """
+    Enables schedules runtime for the lights
+    """
+    
+    CONFIG = configuration.get()["lights"]
 
-    # Convert periods from string to datetime.time objects
-    for string_period in string_periods:
-        start = utils.string2datetime(string_period["start"])
-        end = utils.string2datetime(string_period["end"])
+    periods = CONFIG["periods"]
 
-        period = {"start": start, "end": end, "active": string_period["active"]}
-        periods.append(period)
-        
-    while True:
-        current_time = datetime.datetime.now().time()
+    scheduler = BackgroundScheduler()
+    scheduler.configure(timezone=utc)
+    
+    for period in periods:
+        start_time = period["start"]
+        start_hour, start_min = start_time.split(":")
 
-        for period in periods:
-            if (period["start"] <= current_time <= period["end"]) and period["active"]:
-                on()
-            else:
-                off()
+        end_time = period["end"]
+        end_hour, end_min = start_time.split(":")
+
+        scheduler.add_job(on, trigger='cron', hour=start_hour, minute=start_min)
+        scheduler.add_job(off, trigger="cron", hour=end_hour, minute=end_min)
+
+    scheduler.start()
