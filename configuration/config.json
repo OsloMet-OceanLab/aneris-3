@@ -3,19 +3,8 @@
     "lights": {
         "periods": [
             {
-                "start": "17:10",
-                "end": "18:00",
-                "active": false
-            },
-            {
-                "start": "18:10",
-                "end": "19:00",
-                "active": false
-            },
-            {
                 "start": "19:00",
-                "end": "20:20",
-                "active": true
+                "end": "20:20"
             }
         ],
         "brightness": 100
