@@ -109,8 +109,8 @@ def set_camera_relay():
     Toggle camera relay
     """
 
-    camera_relay_state = request.json.get("camera_relay_state")
-    print(f"camera_relay_state: {camera_relay_state}")
+    camera_relay_state = request.json.get("cameraRelayState")
+    print(f"Camera relay: {camera_relay_state}")
     verify_camera_state = relay.toggle_camera(camera_relay_state)
     return jsonify(verify_camera_state=verify_camera_state)
 
@@ -121,8 +121,8 @@ def set_daisy_relay():
     Toggle daisy relay
     """
 
-    daisy_relay_state = request.json.get("daisy_relay_state")
-    print(f"camera_daisy_state: {daisy_relay_state}")
+    daisy_relay_state = request.json.get("daisyRelayState")
+    print(f"Daisy relay: {daisy_relay_state}")
     verify_daisy_state = relay.toggle_daisy(daisy_relay_state)
     return jsonify(verify_daisy_state=verify_daisy_state)
 
