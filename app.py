@@ -1,21 +1,22 @@
 from flask import Flask, render_template, request, jsonify
 from scripts import lights, uvc, configuration, relay # sensors
-from pytz import utc
+from pytz import timezone, utc
 from apscheduler.schedulers.background import BackgroundScheduler
 
+cet = timezone("CET")
 scheduler = BackgroundScheduler()
-scheduler.configure(timezone=utc)
+scheduler.configure(timezone=cet)
 
 app = Flask(__name__)
 
 def schedule():
     if scheduler.running:
         scheduler.remove_all_jobs()
+    else:
+        scheduler.start()
 
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
-
-    scheduler.start()
 
 @app.route("/")
 def index():
