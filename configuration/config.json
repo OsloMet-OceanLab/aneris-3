@@ -3,17 +3,7 @@
     "lights": {
         "periods": [
             {
-                "start": "17:33",
-                "end": "18:30",
-                "active": false
-            },
-            {
-                "start": "18:10",
-                "end": "19:00",
-                "active": false
-            },
-            {
-                "start": "19:00",
+                "start": "10:45",
                 "end": "20:20",
                 "active": true
             }
@@ -21,7 +11,13 @@
         "brightness": 100
     },
     "uvc": {
-        "time": "20:30",
-        "duration": 10
+        "periods": [
+            {
+                "start": "11:49",
+                "end": "15:00",
+                "active": true
+            }
+        ],
+        "duty_cycle": 100
     }
 }

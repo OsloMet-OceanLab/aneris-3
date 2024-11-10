@@ -1,14 +1,13 @@
-# TODO: Add control lights config in file
-
 """
 author: @rambech
 """
 
 import gpiod as GPIO
 from time import sleep
-from lib import utils
-import datetime
+from numpy import around
+from datetime import datetime
 from scripts import configuration
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Setup PWM pin
 PWM_pin = 12
@@ -25,24 +24,8 @@ MIN_PERIOD = 1100 * 1e-6     # 1100 microseconds
 def on():
     try:
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
-        brightness = configuration.get()["lights"]["brightness"]
-        on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
-        off_period = PWM_PERIOD - on_period
-
         led_line.set_value(1)
-        sleep(on_period)
-        led_line.set_value(0)
-        sleep(off_period)
-    except OSError:
-        print("Not able to access GPIO")
-        pass
     finally:
-        # Only try to turn off again if led_line is registered
-        try:
-            led_line.set_value(0)
-        except:
-            pass
-
         led_line.release()
 
 
@@ -50,28 +33,23 @@ def off():
     try:
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(0)
-    except OSError:
-        print("Not able to access GPIO")
-        pass
     finally:
-        # Only try to turn off again if led_line is registered
-        try:
-            led_line.set_value(0)
-        except:
-            pass
-
         led_line.release()
-
 
 
 def test():
     seconds = 5
     times = seconds * PWM_FREQUENCY
+    on_period = MAX_PERIOD
+    off_period = PWM_PERIOD - on_period
 
     try:
         print("Lights on")
         for _ in range(times):
             on()
+            sleep(on_period)
+            off()
+            sleep(off_period)
     finally:
         print("Lights off")
         off()
@@ -79,23 +57,47 @@ def test():
     return {"message": "Lights tested"}
 
 
-def scheduled():
-    string_periods = configuration.get()["lights"]["periods"]
-    periods = []
+def schedule(scheduler: BackgroundScheduler):
+    """
+    Enables schedules runtime for the lights
+    """
+    
+    CONFIG = configuration.get()["lights"]
 
-    # Convert periods from string to datetime.time objects
-    for string_period in string_periods:
-        start = utils.string2datetime(string_period["start"])
-        end = utils.string2datetime(string_period["end"])
+    time_format = "%H:%M"
+    brightness = min(max(0, CONFIG["brightness"]), 100)/100
+    # Get only active periods
+    light_periods = [period for period in CONFIG["periods"] if period["active"]]
+    on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
+    off_period = PWM_PERIOD - on_period
 
-        period = {"start": start, "end": end, "active": string_period["active"]}
-        periods.append(period)
-        
-    while True:
-        current_time = datetime.datetime.now().time()
+    # print(f"on_time: {on_period}")
+    # print(f"off_time: {off_period}")
 
-        for period in periods:
-            if (period["start"] <= current_time <= period["end"]) and period["active"]:
-                on()
-            else:
-                off()
+    def run_lights(duration):
+        repeat = around(duration / PWM_PERIOD, 0)
+        t1 = datetime.now()
+        print(f"{t1} Video lights on")
+
+        while repeat > 0:
+            on()
+            sleep(on_period)
+            off()
+            sleep(off_period)
+            repeat -= 1
+
+        t2 = datetime.now()
+        print(f"{t2} Video lights off")
+    
+    for light_period in light_periods:
+        start_time = light_period["start"]
+        end_time = light_period["end"]
+        start_hour, start_min = start_time.split(":")
+
+        start = datetime.strptime(start_time, time_format)
+        end = datetime.strptime(end_time, time_format)
+        temp = end - start
+        duration = temp.total_seconds()
+        # print(f"duration: {duration}")
+
+        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration])

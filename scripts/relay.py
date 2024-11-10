@@ -2,9 +2,6 @@ import gpiod as GPIO
 from time import sleep
 from scripts import configuration
 
-# TODO: Add reset time to config
-reset_time = 200
-
 
 DAISY_PIN = 15
 chip = GPIO.Chip('gpiochip4')
