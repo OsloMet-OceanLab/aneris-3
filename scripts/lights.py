@@ -23,7 +23,6 @@ MIN_PERIOD = 1100 * 1e-6     # 1100 microseconds
 
 def on():
     try:
-        print("Lights on")
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(1)
     finally:
@@ -32,7 +31,6 @@ def on():
 
 def off():
     try:
-        print("Lights off")
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(0)
     finally:
@@ -67,29 +65,29 @@ def schedule(scheduler: BackgroundScheduler):
     CONFIG = configuration.get()["lights"]
 
     time_format = "%H:%M"
-    # brightness = min(max(0, CONFIG["brightness"]), 100)/100
+    brightness = min(max(0, CONFIG["brightness"]), 100)/100
     # Get only active periods
     light_periods = [period for period in CONFIG["periods"] if period["active"]]
-    # on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
-    # off_period = PWM_PERIOD - on_period
+    on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
+    off_period = PWM_PERIOD - on_period
 
     # print(f"on_time: {on_period}")
     # print(f"off_time: {off_period}")
 
     def run_lights(duration):
-        # repeat = around(duration / PWM_PERIOD, 0)
-        # print(f"repeat: {repeat}")
-        on_period = duration
+        repeat = around(duration / PWM_PERIOD, 0)
+        t1 = datetime.now()
+        print(f"{t1} Video lights on")
 
-        on()
-        sleep(on_period)
-        off()
-        # while repeat > 0:
-        #     on()
-        #     sleep(on_period)
-        #     off()
-        #     sleep(off_period)
-        #     repeat -= 1
+        while repeat > 0:
+            on()
+            sleep(on_period)
+            off()
+            sleep(off_period)
+            repeat -= 1
+
+        t2 = datetime.now()
+        print(f"{t2} Video lights off")
     
     for light_period in light_periods:
         start_time = light_period["start"]
@@ -100,6 +98,6 @@ def schedule(scheduler: BackgroundScheduler):
         end = datetime.strptime(end_time, time_format)
         temp = end - start
         duration = temp.total_seconds()
-        print(f"duration: {duration}")
+        # print(f"duration: {duration}")
 
         scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration])

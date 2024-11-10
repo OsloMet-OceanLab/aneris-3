@@ -58,14 +58,13 @@ def schedule(scheduler: BackgroundScheduler):
     on_time = duty_cycle * 2.5
     off_time = period - on_time
 
-    print(f"on_time: {on_time}")
-    print(f"off_time: {off_time}")
-
-    print("In uvc")
+    # print(f"on_time: {on_time}")
+    # print(f"off_time: {off_time}")
 
     def run_uvc(duration):
         repeat = around(duration / period, 0)
-        print(f"repeat: {repeat}")
+        t1 = datetime.now()
+        print(f"{t1} UVC on")
 
         while repeat > 0:
             on()
@@ -73,6 +72,9 @@ def schedule(scheduler: BackgroundScheduler):
             off()
             sleep(off_time)
             repeat -= 1
+
+        t2 = datetime.now()
+        print(f"{t2} UVC off")
 
     for uvc_period in uvc_periods:
         start_time = uvc_period["start"]
@@ -83,7 +85,7 @@ def schedule(scheduler: BackgroundScheduler):
         end = datetime.strptime(end_time, time_format)
         temp = end - start
         duration = temp.total_seconds()
-        print(f"duration: {duration}")
+        # print(f"duration: {duration}")
 
         # scheduler.add_job(run_uvc(duration), trigger='cron', hour=start_hour, minute=start_min)
         scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration])
