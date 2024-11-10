@@ -67,25 +67,29 @@ def schedule(scheduler: BackgroundScheduler):
     CONFIG = configuration.get()["lights"]
 
     time_format = "%H:%M"
-    brightness = min(max(0, CONFIG["brightness"]), 100)/100
+    # brightness = min(max(0, CONFIG["brightness"]), 100)/100
     # Get only active periods
     light_periods = [period for period in CONFIG["periods"] if period["active"]]
-    on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
-    off_period = PWM_PERIOD - on_period
+    # on_period = ((MAX_PERIOD - MIN_PERIOD) * brightness / 100) + MIN_PERIOD
+    # off_period = PWM_PERIOD - on_period
 
-    print(f"on_time: {on_period}")
-    print(f"off_time: {off_period}")
+    # print(f"on_time: {on_period}")
+    # print(f"off_time: {off_period}")
 
     def run_lights(duration):
-        repeat = around(duration / PWM_PERIOD, 0)
-        print(f"repeat: {repeat}")
+        # repeat = around(duration / PWM_PERIOD, 0)
+        # print(f"repeat: {repeat}")
+        on_period = duration
 
-        while repeat > 0:
-            on()
-            sleep(on_period)
-            off()
-            sleep(off_period)
-            repeat -= 1
+        on()
+        sleep(on_period)
+        off()
+        # while repeat > 0:
+        #     on()
+        #     sleep(on_period)
+        #     off()
+        #     sleep(off_period)
+        #     repeat -= 1
     
     for light_period in light_periods:
         start_time = light_period["start"]
