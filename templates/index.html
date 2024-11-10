@@ -317,6 +317,31 @@
                 });
         }
 
+        function setCameraRelay(state) {
+            fetch('/set_camera_relay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cameraRelayState: state })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('on_off_camera').innerText = data.verify_camera_state;
+                });
+        }
+
+        function setDaisyRelay(state) {
+            fetch('/set_daisy_relay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ daisyRelayState: state })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('on_off_daisy').innerText = data.verify_daisy_state;
+                });
+        }
+
+
         function testLight() {
             fetch('/test_light', {
                 method: 'POST',
@@ -341,8 +366,17 @@
                 });
         }
 
+        // Event lisners
         // Load config when config gets loaded
         window.onload = getConfig;
+        document.getElementById('on_off_camera').addEventListener('change', function () {
+            const isChecked = this.checked;
+            setCameraRelay(isChecked); // Call the function with the current state
+        });
+        document.getElementById('on_off_daisy').addEventListener('change', function () {
+            const isChecked = this.checked;
+            setDaisyRelay(isChecked); // Call the function with the current state
+        });
     </script>
 </body>
 
