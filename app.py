@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from scripts import lights, uvc, configuration, relay # sensors
-from pytz import timezone, utc
+from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 cet = timezone("CET")
@@ -9,12 +9,17 @@ scheduler.configure(timezone=cet)
 
 app = Flask(__name__)
 
+
 def schedule():
     if scheduler.running:
         scheduler.remove_all_jobs()
     else:
         scheduler.start()
 
+    # Update scheduler once a day in order to keep sunrise and sunset up to date
+    # Triggers mid-day in order to avoid conflicts with lights at night
+    scheduler.add_job(schedule, trigger='cron', hour=12, minute=0)
+    lights.night(scheduler)
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
 
