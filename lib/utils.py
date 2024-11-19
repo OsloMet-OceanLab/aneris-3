@@ -39,4 +39,6 @@ def roundHalfHour(dt: datetime.datetime):
     return dt.replace(minute=new_minute, second=0, microsecond=0)
 
 
-    
+def print_jobs(scheduler):
+    for idx, job in enumerate(scheduler.get_jobs()):
+        print(f"Job{idx}: {job.id}")

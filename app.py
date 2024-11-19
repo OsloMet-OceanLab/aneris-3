@@ -1,27 +1,41 @@
 from flask import Flask, render_template, request, jsonify
 from scripts import lights, uvc, configuration, relay # sensors
+from lib import utils
 from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 cet = timezone("CET")
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=cet)
+scheduler.start()
 
 app = Flask(__name__)
 
 
 def schedule():
-    if scheduler.running:
-        scheduler.remove_all_jobs()
-    else:
-        scheduler.start()
+    # if scheduler.running:
+    print(f"Scheduled jobs before")
+    utils.print_jobs(scheduler)
+    for job in scheduler.get_jobs():
+        # Don't remove jobs related to night schedule
+        if job.id[:3] == "uvc" or job.id[:3] == "lig":
+            scheduler.remove_job(job.id)
+    # else:
+    #     scheduler.start()
 
-    # Update scheduler once a day in order to keep sunrise and sunset up to date
-    # Triggers mid-day in order to avoid conflicts with lights at night
-    scheduler.add_job(schedule, trigger='cron', hour=12, minute=0)
-    lights.night(scheduler)
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
+
+    print("Scheduled jobs after:")
+    utils.print_jobs(scheduler)
+
+
+def schedule_night():
+    # Update scheduler once a day in order to keep sunrise and sunset up to date
+    # Triggers mid-day in order to avoid conflicts with lights at night
+    scheduler.add_job(schedule_night, trigger='cron', hour=12, minute=0, id="schedule_night", replace_existing=True)
+    lights.night(scheduler)
+
 
 @app.route("/")
 def index():
@@ -59,10 +73,48 @@ def restart_schedule():
 
     print("Restart schedule")
     schedule()
-    res = {"message": "Shedule restarted"}
+    res = {"message": "Schedule restarted"}
 
     return jsonify(res=res)
 
+@app.route("/set_night_schedule", methods=["POST"])
+def toggle_night_schedule():
+    """
+    Toggles the video lights at night
+    """
+
+    print("Toggle night video light schedule")
+
+    # Get state from UI
+    night_schedule_state = request.json.get("nightScheduleState")
+
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["lights"]["night"] = night_schedule_state
+    configuration.set(CONFIG)
+
+    night_schedule_feedback = CONFIG["lights"]["night"]
+
+    print(f"UI night schedule state: {night_schedule_state}")
+    print(f"Internal night schedule state: {night_schedule_feedback}")
+
+    print("Night before: ")
+    utils.print_jobs(scheduler)
+
+    if night_schedule_state:
+        # Schedule night light if commanded True from UI
+        schedule_night()
+    elif scheduler.running:
+        print("Scheduler running")
+        # Check if night light is running when commanded False from UI
+        scheduler.remove_job(job_id="night")
+        scheduler.remove_job(job_id="schedule_night")
+
+    print("Night after: ")
+    utils.print_jobs(scheduler)
+    return jsonify(night_schedule_feedback=night_schedule_feedback)
+
+    
 
 @app.route("/test_light", methods=["POST"])
 def test_light():

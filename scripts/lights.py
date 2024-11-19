@@ -31,11 +31,10 @@ def sunset_sunrise() -> tuple[datetime, datetime]:
     sun = Sun(41.2152, 1.7274)
 
     cet = timezone("CET")
-    today = datetime.now()
+    # today = datetime.now()
     # tomorrow = today + timedelta(days=1)
 
     # The night goes from sunset to sunrise
-    # TODO: Fix rounding problem
     sunset = utils.roundHalfHour(sun.get_sunset_time(time_zone=cet))
     sunrise = utils.roundHalfHour(sun.get_sunrise_time(time_zone=cet))
 
@@ -130,7 +129,10 @@ def night(scheduler: BackgroundScheduler):
             sleep(off_time)
             repeat -= 1
 
-    scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min)
+    # NOTE: The night schedule has consists of two jobs: 
+    # 1) Called "night" running the actual schedule
+    # 2) Called "schedule_night" used to reschedule the night schedule every day at 12:00
+    scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min, id="night", replace_existing=True)
 
 def schedule(scheduler: BackgroundScheduler):
     """
@@ -142,7 +144,7 @@ def schedule(scheduler: BackgroundScheduler):
     # Get only active periods
     light_periods = [period for period in CONFIG["periods"] if period["active"]]
     
-    for light_period in light_periods:
+    for idx, light_period in enumerate(light_periods):
         start_time = light_period["start"]
         end_time = light_period["end"]
         start_hour, start_min = start_time.split(":")
@@ -153,4 +155,5 @@ def schedule(scheduler: BackgroundScheduler):
         duration = temp.total_seconds()
         # print(f"duration: {duration}")
 
-        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration, brightness])
+        job_id = "light" + str(idx)
+        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration, brightness], id=job_id, replace_existing=True)

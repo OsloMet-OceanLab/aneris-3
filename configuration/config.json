@@ -1,15 +1,32 @@
 {
     "reset_time": 10,
     "lights": {
-        "periods": [],
-        "brightness": 100
+        "periods": [
+            {
+                "start": "12:30",
+                "end": "13:30",
+                "active": true
+            },
+            {
+                "start": "13:30",
+                "end": "14:30",
+                "active": true
+            }
+        ],
+        "brightness": 100,
+        "night": true
     },
     "uvc": {
         "periods": [
             {
-                "start": "11:49",
-                "end": "15:00",
-                "active": false
+                "start": "01:00",
+                "end": "03:00",
+                "active": true
+            },
+            {
+                "start": "12:01",
+                "end": "13:01",
+                "active": true
             }
         ],
         "duty_cycle": 100
