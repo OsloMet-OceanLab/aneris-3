@@ -13,15 +13,16 @@ app = Flask(__name__)
 
 
 def schedule():
-    # if scheduler.running:
+    """
+    Sets schedules from video lights and UVC timetables
+    """
+
     print(f"Scheduled jobs before")
     utils.print_jobs(scheduler)
     for job in scheduler.get_jobs():
-        # Don't remove jobs related to night schedule
+        # Only remove jobs related to the UI time table
         if job.id[:3] == "uvc" or job.id[:3] == "lig":
             scheduler.remove_job(job.id)
-    # else:
-    #     scheduler.start()
 
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
@@ -166,10 +167,18 @@ def set_camera_relay():
     Toggle camera relay
     """
 
+    print("Toggle camera relay")
+
+    # Get state from UI
     camera_relay_state = request.json.get("cameraRelayState")
-    print(f"Camera relay: {camera_relay_state}")
-    verify_camera_state = relay.toggle_camera(camera_relay_state)
-    return jsonify(verify_camera_state=verify_camera_state)
+    
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["relay"]["camera"] = camera_relay_state
+    configuration.set(CONFIG)
+
+    camera_state_feedback = relay.toggle_camera()
+    return jsonify(camera_state_feedback=camera_state_feedback)
 
 
 @app.route("/set_daisy_relay", methods=["POST"])
@@ -178,10 +187,18 @@ def set_daisy_relay():
     Toggle daisy relay
     """
 
+    print("Toggle daisy relay")
+
+    # Get state from UI
     daisy_relay_state = request.json.get("daisyRelayState")
-    print(f"Daisy relay: {daisy_relay_state}")
-    verify_daisy_state = relay.toggle_daisy(daisy_relay_state)
-    return jsonify(verify_daisy_state=verify_daisy_state)
+    
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["relay"]["daisy"] = daisy_relay_state
+    configuration.set(CONFIG)
+
+    daisy_state_feedback = relay.toggle_daisy()
+    return jsonify(daisy_state_feedback=daisy_state_feedback)
 
 
 @app.route("/get_temp", methods=["GET"])

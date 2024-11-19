@@ -31,8 +31,6 @@ def sunset_sunrise() -> tuple[datetime, datetime]:
     sun = Sun(41.2152, 1.7274)
 
     cet = timezone("CET")
-    # today = datetime.now()
-    # tomorrow = today + timedelta(days=1)
 
     # The night goes from sunset to sunrise
     sunset = utils.roundHalfHour(sun.get_sunset_time(time_zone=cet))
@@ -153,7 +151,6 @@ def schedule(scheduler: BackgroundScheduler):
         end = datetime.strptime(end_time, time_format)
         temp = end - start
         duration = temp.total_seconds()
-        # print(f"duration: {duration}")
 
         job_id = "light" + str(idx)
         scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration, brightness], id=job_id, replace_existing=True)

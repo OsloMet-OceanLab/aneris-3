@@ -34,17 +34,17 @@
 
     <!-- Toggle camera and daisy chain -->
     <h3>Relays</h3>
-    <label for="on_off_camera" style="cursor: pointer;"
+    <label for="toggle_camera" style="cursor: pointer;"
         title="Remember that when camera is off the relay solenoid is active">Camera :</label>
     <label class="switch">
-        <input type="checkbox" id="on_off_camera" checked>
+        <input type="checkbox" id="toggle_camera" checked>
         <span class="slider round"></span>
     </label><br><br>
 
-    <label for="on_off_daisy" style="cursor: pointer;"
+    <label for="toggle_daisy" style="cursor: pointer;"
         title="Remember that when daisy chain is off the relay solenoid is active">Daisy ON/OFF:</label>
     <label class="switch">
-        <input type="checkbox" id="on_off_daisy" checked>
+        <input type="checkbox" id="toggle_daisy" checked>
         <span class="slider round"></span>
     </label>
 
@@ -100,12 +100,13 @@
                 .then(response => response.json())
                 .then(data => {
                     // Load lights configuration
-
                     const periods = data.config["lights"]["periods"];
                     periods.forEach(period => {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
                     });
                     document.getElementById("reset_time").value = data.config["reset_time"];
+                    document.getElementById("toggle_camera").checked = data.config["relay"]["camera"];
+                    document.getElementById("toggle_daisy").checked = data.config["relay"]["daisy"];
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
                     document.getElementById("toggle_night_schedule").checked = data.config["lights"]["night"];
 
@@ -151,6 +152,10 @@
             // Build new configuration
             const newConfig = {
                 reset_time: parseFloat(document.getElementById("reset_time").value, 10),
+                relay: {
+                    camera: document.getElementById("toggle_camera").checked,
+                    daisy: document.getElementById("toggle_daisy").checked
+                },
                 lights: {
                     periods: periods,
                     brightness: parseInt(document.getElementById("light_brightness").value, 10),
@@ -341,7 +346,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('on_off_camera').innerText = data.verify_camera_state;
+                    document.getElementById('toggle_camera').innerText = data.camera_state_feedback;
                 });
         }
 
@@ -353,7 +358,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('on_off_daisy').innerText = data.verify_daisy_state;
+                    document.getElementById('toggle_daisy').innerText = data.daisy_state_feedback;
                 });
         }
 
@@ -397,11 +402,11 @@
         // Event lisners
         // Load config when config gets loaded
         window.onload = getConfig;
-        document.getElementById('on_off_camera').addEventListener('change', function () {
+        document.getElementById('toggle_camera').addEventListener('change', function () {
             const isChecked = this.checked;
             setCameraRelay(isChecked); // Call the function with the current state
         });
-        document.getElementById('on_off_daisy').addEventListener('change', function () {
+        document.getElementById('toggle_daisy').addEventListener('change', function () {
             const isChecked = this.checked;
             setDaisyRelay(isChecked); // Call the function with the current state
         });
