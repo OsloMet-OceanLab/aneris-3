@@ -1,19 +1,24 @@
 {
-    "reset_time": 2,
+    "reset_time": 10,
+    "relay": {
+        "camera": true,
+        "daisy": true
+    },
     "lights": {
         "periods": [
             {
-                "start": "10:45",
-                "end": "20:20",
+                "start": "14:42",
+                "end": "15:30",
                 "active": true
             }
         ],
-        "brightness": 100
+        "brightness": 100,
+        "night": true
     },
     "uvc": {
         "periods": [
             {
-                "start": "11:49",
+                "start": "14:41",
                 "end": "15:00",
                 "active": true
             }

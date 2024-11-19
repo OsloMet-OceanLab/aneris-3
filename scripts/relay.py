@@ -67,7 +67,10 @@ def reboot_camera():
     camera_on()
     
 
-def toggle_camera(on):
+def toggle_camera():
+    CONFIG = configuration.get()
+    on = CONFIG["relay"]["camera"]
+
     if not on:
         camera_off()
         return False
@@ -75,7 +78,10 @@ def toggle_camera(on):
         camera_on()
         return True
 
-def toggle_daisy(on):
+def toggle_daisy():
+    CONFIG = configuration.get()
+    on = CONFIG["relay"]["daisy"]
+
     if not on:
         daisy_off()
         return False

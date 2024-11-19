@@ -76,7 +76,7 @@ def schedule(scheduler: BackgroundScheduler):
         t2 = datetime.now()
         print(f"{t2} UVC off")
 
-    for uvc_period in uvc_periods:
+    for idx, uvc_period in enumerate(uvc_periods):
         start_time = uvc_period["start"]
         end_time = uvc_period["end"]
         start_hour, start_min = start_time.split(":")
@@ -85,7 +85,6 @@ def schedule(scheduler: BackgroundScheduler):
         end = datetime.strptime(end_time, time_format)
         temp = end - start
         duration = temp.total_seconds()
-        # print(f"duration: {duration}")
-
-        # scheduler.add_job(run_uvc(duration), trigger='cron', hour=start_hour, minute=start_min)
-        scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration])
+        
+        job_id = "uvc" + str(idx)
+        scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration], id=job_id, replace_existing=True)

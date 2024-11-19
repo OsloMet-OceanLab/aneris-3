@@ -1,22 +1,42 @@
 from flask import Flask, render_template, request, jsonify
 from scripts import lights, uvc, configuration, relay # sensors
-from pytz import timezone, utc
+from lib import utils
+from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 cet = timezone("CET")
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=cet)
+scheduler.start()
 
 app = Flask(__name__)
 
+
 def schedule():
-    if scheduler.running:
-        scheduler.remove_all_jobs()
-    else:
-        scheduler.start()
+    """
+    Sets schedules from video lights and UVC timetables
+    """
+
+    print(f"Scheduled jobs before")
+    utils.print_jobs(scheduler)
+    for job in scheduler.get_jobs():
+        # Only remove jobs related to the UI time table
+        if job.id[:3] == "uvc" or job.id[:3] == "lig":
+            scheduler.remove_job(job.id)
 
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
+
+    print("Scheduled jobs after:")
+    utils.print_jobs(scheduler)
+
+
+def schedule_night():
+    # Update scheduler once a day in order to keep sunrise and sunset up to date
+    # Triggers mid-day in order to avoid conflicts with lights at night
+    scheduler.add_job(schedule_night, trigger='cron', hour=12, minute=0, id="schedule_night", replace_existing=True)
+    lights.night(scheduler)
+
 
 @app.route("/")
 def index():
@@ -54,10 +74,48 @@ def restart_schedule():
 
     print("Restart schedule")
     schedule()
-    res = {"message": "Shedule restarted"}
+    res = {"message": "Schedule restarted"}
 
     return jsonify(res=res)
 
+@app.route("/set_night_schedule", methods=["POST"])
+def toggle_night_schedule():
+    """
+    Toggles the video lights at night
+    """
+
+    print("Toggle night video light schedule")
+
+    # Get state from UI
+    night_schedule_state = request.json.get("nightScheduleState")
+
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["lights"]["night"] = night_schedule_state
+    configuration.set(CONFIG)
+
+    night_schedule_feedback = CONFIG["lights"]["night"]
+
+    print(f"UI night schedule state: {night_schedule_state}")
+    print(f"Internal night schedule state: {night_schedule_feedback}")
+
+    print("Night before: ")
+    utils.print_jobs(scheduler)
+
+    if night_schedule_state:
+        # Schedule night light if commanded True from UI
+        schedule_night()
+    elif scheduler.running:
+        print("Scheduler running")
+        # Check if night light is running when commanded False from UI
+        scheduler.remove_job(job_id="night")
+        scheduler.remove_job(job_id="schedule_night")
+
+    print("Night after: ")
+    utils.print_jobs(scheduler)
+    return jsonify(night_schedule_feedback=night_schedule_feedback)
+
+    
 
 @app.route("/test_light", methods=["POST"])
 def test_light():
@@ -109,10 +167,18 @@ def set_camera_relay():
     Toggle camera relay
     """
 
+    print("Toggle camera relay")
+
+    # Get state from UI
     camera_relay_state = request.json.get("cameraRelayState")
-    print(f"Camera relay: {camera_relay_state}")
-    verify_camera_state = relay.toggle_camera(camera_relay_state)
-    return jsonify(verify_camera_state=verify_camera_state)
+    
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["relay"]["camera"] = camera_relay_state
+    configuration.set(CONFIG)
+
+    camera_state_feedback = relay.toggle_camera()
+    return jsonify(camera_state_feedback=camera_state_feedback)
 
 
 @app.route("/set_daisy_relay", methods=["POST"])
@@ -121,10 +187,18 @@ def set_daisy_relay():
     Toggle daisy relay
     """
 
+    print("Toggle daisy relay")
+
+    # Get state from UI
     daisy_relay_state = request.json.get("daisyRelayState")
-    print(f"Daisy relay: {daisy_relay_state}")
-    verify_daisy_state = relay.toggle_daisy(daisy_relay_state)
-    return jsonify(verify_daisy_state=verify_daisy_state)
+    
+    # Update configuration with night schedule state
+    CONFIG = configuration.get()
+    CONFIG["relay"]["daisy"] = daisy_relay_state
+    configuration.set(CONFIG)
+
+    daisy_state_feedback = relay.toggle_daisy()
+    return jsonify(daisy_state_feedback=daisy_state_feedback)
 
 
 @app.route("/get_temp", methods=["GET"])

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<!-- TODO: Make UVC and video lights time periods work properly -->
+
 <head>
     <meta charset="UTF-8">
     <title>Aneris Control Panel</title>
@@ -19,6 +21,8 @@
 
     <!-- Relay control -->
     <h2>Power Options</h2>
+
+    <!-- Reboot camera and daisy chain -->
     <h3>Reboot</h3>
     <label style="cursor: pointer;" title="Remember to save config" for="reset_time">Reset time:</label>
     <input type="number" id="reset_time" name="reset_time" min="0" max="1000"> seconds<br>
@@ -28,18 +32,19 @@
         onclick="rebootDaisy()">Reboot
         daisy chain</button><br>
 
+    <!-- Toggle camera and daisy chain -->
     <h3>Relays</h3>
-    <label for="on_off_camera" style="cursor: pointer;"
+    <label for="toggle_camera" style="cursor: pointer;"
         title="Remember that when camera is off the relay solenoid is active">Camera :</label>
     <label class="switch">
-        <input type="checkbox" id="on_off_camera" checked>
+        <input type="checkbox" id="toggle_camera" checked>
         <span class="slider round"></span>
     </label><br><br>
 
-    <label for="on_off_daisy" style="cursor: pointer;"
+    <label for="toggle_daisy" style="cursor: pointer;"
         title="Remember that when daisy chain is off the relay solenoid is active">Daisy ON/OFF:</label>
     <label class="switch">
-        <input type="checkbox" id="on_off_daisy" checked>
+        <input type="checkbox" id="toggle_daisy" checked>
         <span class="slider round"></span>
     </label>
 
@@ -60,8 +65,15 @@
 
     <!-- Light trigger -->
     <button style="cursor: pointer;" title="Triggers lights for 5 seconds" onclick="testLight()">Test
-        lights</button><br>
+        lights</button><br><br>
 
+    <!-- Night light schedule -->
+    <label for="toggle_night_schedule" style="cursor: pointer;" title="Toggles the night schedule on or off">Night
+        ON/OFF:</label>
+    <label class="switch">
+        <input type="checkbox" id="toggle_night_schedule">
+        <span class="slider round"></span>
+    </label>
 
     <!-- UVC configuration -->
     <h3>UVC LED</h3>
@@ -88,13 +100,15 @@
                 .then(response => response.json())
                 .then(data => {
                     // Load lights configuration
-
                     const periods = data.config["lights"]["periods"];
                     periods.forEach(period => {
                         addTimePeriod(startTime = period["start"], endTime = period["end"], active = period["active"])
                     });
                     document.getElementById("reset_time").value = data.config["reset_time"];
+                    document.getElementById("toggle_camera").checked = data.config["relay"]["camera"];
+                    document.getElementById("toggle_daisy").checked = data.config["relay"]["daisy"];
                     document.getElementById("light_brightness").value = data.config["lights"]["brightness"];
+                    document.getElementById("toggle_night_schedule").checked = data.config["lights"]["night"];
 
                     // Load UVC configuration
                     const uvcPeriods = data.config["uvc"]["periods"];
@@ -138,9 +152,14 @@
             // Build new configuration
             const newConfig = {
                 reset_time: parseFloat(document.getElementById("reset_time").value, 10),
+                relay: {
+                    camera: document.getElementById("toggle_camera").checked,
+                    daisy: document.getElementById("toggle_daisy").checked
+                },
                 lights: {
                     periods: periods,
-                    brightness: parseInt(document.getElementById("light_brightness").value, 10)
+                    brightness: parseInt(document.getElementById("light_brightness").value, 10),
+                    night: document.getElementById("toggle_night_schedule").checked,
                 },
                 uvc: {
                     periods: uvcPeriods,
@@ -164,7 +183,7 @@
         }
 
         function restart_schedule() {
-            // Restart video lights 
+            // Restart video lights and UVC
             fetch('/restart_schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
@@ -179,6 +198,7 @@
             // Create a new div to hold the start and end time inputs
             const container = document.getElementById('timePeriodsContainer');
             const periodDiv = document.createElement('div');
+            periodDiv.dataset.active = active; // Initalise active
             periodDiv.classList.add('time-period');
 
             // Create start time input
@@ -232,6 +252,7 @@
             // Create a new div to hold the start and end time inputs
             const container = document.getElementById('uvcTimePeriodsContainer');
             const periodDiv = document.createElement('div');
+            periodDiv.dataset.active = active; // Initalise active
             periodDiv.classList.add('uvc-time-period');
 
             // Create start time input
@@ -325,7 +346,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('on_off_camera').innerText = data.verify_camera_state;
+                    document.getElementById('toggle_camera').innerText = data.camera_state_feedback;
                 });
         }
 
@@ -337,10 +358,22 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('on_off_daisy').innerText = data.verify_daisy_state;
+                    document.getElementById('toggle_daisy').innerText = data.daisy_state_feedback;
                 });
         }
 
+        function setNightScheduleState(state) {
+            // Toggle night schedule for video lights
+            fetch("/set_night_schedule", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nightScheduleState: state })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("toggle_night_schedule").value = data.night_schedule_feedback
+                })
+        }
 
         function testLight() {
             fetch('/test_light', {
@@ -369,13 +402,17 @@
         // Event lisners
         // Load config when config gets loaded
         window.onload = getConfig;
-        document.getElementById('on_off_camera').addEventListener('change', function () {
+        document.getElementById('toggle_camera').addEventListener('change', function () {
             const isChecked = this.checked;
             setCameraRelay(isChecked); // Call the function with the current state
         });
-        document.getElementById('on_off_daisy').addEventListener('change', function () {
+        document.getElementById('toggle_daisy').addEventListener('change', function () {
             const isChecked = this.checked;
             setDaisyRelay(isChecked); // Call the function with the current state
+        });
+        document.getElementById('toggle_night_schedule').addEventListener('change', function () {
+            const isChecked = this.checked;
+            setNightScheduleState(isChecked); // Call the function with the current state
         });
     </script>
 </body>
