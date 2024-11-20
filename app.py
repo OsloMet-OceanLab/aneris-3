@@ -17,8 +17,6 @@ def schedule():
     Sets schedules from video lights and UVC timetables
     """
 
-    print(f"Scheduled jobs before")
-    utils.print_jobs(scheduler)
     for job in scheduler.get_jobs():
         # Only remove jobs related to the UI time table
         if job.id[:3] == "uvc" or job.id[:3] == "lig":
@@ -27,7 +25,7 @@ def schedule():
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
 
-    print("Scheduled jobs after:")
+    print(f"Current background processes:")
     utils.print_jobs(scheduler)
 
 
@@ -36,6 +34,9 @@ def schedule_night():
     # Triggers mid-day in order to avoid conflicts with lights at night
     scheduler.add_job(schedule_night, trigger='cron', hour=12, minute=0, id="schedule_night", replace_existing=True)
     lights.night(scheduler)
+
+    print(f"Current background processes:")
+    utils.print_jobs(scheduler)
 
 
 @app.route("/")
@@ -96,12 +97,6 @@ def toggle_night_schedule():
 
     night_schedule_feedback = CONFIG["lights"]["night"]
 
-    print(f"UI night schedule state: {night_schedule_state}")
-    print(f"Internal night schedule state: {night_schedule_feedback}")
-
-    print("Night before: ")
-    utils.print_jobs(scheduler)
-
     if night_schedule_state:
         # Schedule night light if commanded True from UI
         schedule_night()
@@ -111,8 +106,6 @@ def toggle_night_schedule():
         scheduler.remove_job(job_id="night")
         scheduler.remove_job(job_id="schedule_night")
 
-    print("Night after: ")
-    utils.print_jobs(scheduler)
     return jsonify(night_schedule_feedback=night_schedule_feedback)
 
     

@@ -111,18 +111,10 @@ def night(scheduler: BackgroundScheduler):
     on_time = 60 # Seconds
     off_time = NIGHT_PERIOD - on_time
 
-    print(f"Night period: {NIGHT_PERIOD} seconds")
-    print(f"On time: {on_time} seconds")
-    print(f"Off time: {off_time} seconds")
-
-    repeat = around(night_duration / NIGHT_PERIOD, 0)
-    print(f"night duration: {night_duration}")
-    print(f"run_night repeat: {repeat}")
-
     def run_night():
         repeat = around(night_duration / NIGHT_PERIOD, 0)
 
-        while repeat > 0: 
+        while repeat > 0:
             run_lights(on_time, brightness)
             sleep(off_time)
             repeat -= 1
