@@ -144,11 +144,6 @@ function addTimePeriod(startTime = null, endTime = null, active = true) {
 
     // Append the period div to the main container
     container.appendChild(periodDiv);
-
-    // // Set the active class if the period is active
-    // if (active) {
-    //     periodDiv.classList.add('active');
-    // }
 }
 
 function addUVCTimePeriod(startTime = null, endTime = null, dutyCycle = null, active = true) {
