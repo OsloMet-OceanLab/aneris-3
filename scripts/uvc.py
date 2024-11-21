@@ -87,4 +87,4 @@ def schedule(scheduler: BackgroundScheduler):
         duration = temp.total_seconds()
         
         job_id = "uvc" + str(idx)
-        scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration], id=job_id, replace_existing=True)
+        scheduler.add_job(run_uvc, trigger='cron', hour=start_hour, minute=start_min, args=[duration], id=job_id, replace_existing=True, max_instances=5)
