@@ -21,10 +21,12 @@ def schedule():
         # Only remove jobs related to the UI time table
         if job.id[:3] == "uvc" or job.id[:3] == "lig":
             scheduler.remove_job(job.id)
-
+            
+    # Schedule lights
     lights.schedule(scheduler)
     uvc.schedule(scheduler)
 
+    # Display active jobs in terminal
     print(f"Current background processes:")
     utils.print_jobs(scheduler)
 
