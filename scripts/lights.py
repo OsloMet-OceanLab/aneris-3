@@ -138,7 +138,7 @@ def night(scheduler: BackgroundScheduler):
     # NOTE: The night schedule has consists of two jobs: 
     # 1) Called "night" running the actual schedule
     # 2) Called "schedule_night" used to reschedule the night schedule every day at 12:00
-    scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min, id="night", replace_existing=True)
+    scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min, id="night", replace_existing=True, max_instances=1)
 
 def schedule(scheduler: BackgroundScheduler):
     """
@@ -169,4 +169,4 @@ def schedule(scheduler: BackgroundScheduler):
 
         # Add job with id so it is easier to remove later
         job_id = "light" + str(idx)
-        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration, brightness], id=job_id, replace_existing=True)
+        scheduler.add_job(run_lights, trigger='cron', hour=start_hour, minute=start_min, args=[duration, brightness], id=job_id, replace_existing=True, max_instances=10)
