@@ -10,6 +10,11 @@
                 "start": "14:42",
                 "end": "15:30",
                 "active": true
+            },
+            {
+                "start": "15:52",
+                "end": "15:54",
+                "active": true
             }
         ],
         "brightness": 100,
