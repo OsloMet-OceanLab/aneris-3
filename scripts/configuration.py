@@ -24,5 +24,5 @@ def set(new_config):
             json.dump(new_config, file, indent=4)
 
         return "Config updated"
-    except:
-        return "Was not able to update config"
+    except Exception as e:
+        return f"Was not able to update config, error {e}"

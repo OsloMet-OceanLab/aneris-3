@@ -58,23 +58,22 @@ def schedule(scheduler: BackgroundScheduler):
     on_time = duty_cycle * 2.5
     off_time = period - on_time
 
-    # print(f"on_time: {on_time}")
-    # print(f"off_time: {off_time}")
-
     def run_uvc(duration):
         repeat = around(duration / period, 0)
-        t1 = datetime.now()
-        print(f"{t1} UVC on")
 
         while repeat > 0:
+            # Turn on
             on()
+            t1 = datetime.now()
+            print(f"{t1} UVC on")
             sleep(on_time)
+
+            # Turn off 
             off()
+            t2 = datetime.now()
+            print(f"{t2} UVC off")
             sleep(off_time)
             repeat -= 1
-
-        t2 = datetime.now()
-        print(f"{t2} UVC off")
 
     for idx, uvc_period in enumerate(uvc_periods):
         start_time = uvc_period["start"]

@@ -260,6 +260,7 @@ function setDaisyRelay(state) {
         });
 }
 
+// TODO: Make night video lights turn on and off again
 function setNightScheduleState(state) {
     // Toggle night schedule for video lights
     fetch("/set_night_schedule", {
@@ -269,7 +270,8 @@ function setNightScheduleState(state) {
     })
         .then(response => response.json())
         .then(data => {
-            document.getElementById("toggle_night_schedule").value = data.night_schedule_feedback
+            document.getElementById("toggle_night_schedule").value = data.night_schedule_feedback;
+            setConfig();
         })
 }
 
@@ -311,4 +313,5 @@ document.getElementById('toggle_daisy').addEventListener('change', function () {
 document.getElementById('toggle_night_schedule').addEventListener('change', function () {
     const isChecked = this.checked;
     setNightScheduleState(isChecked); // Call the function with the current state
+    // setConfig();
 });

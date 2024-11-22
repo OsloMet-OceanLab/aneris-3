@@ -37,8 +37,8 @@ def sunset_sunrise() -> tuple[datetime, datetime]:
     sunrise = utils.roundHalfHour(sun.get_sunrise_time(time_zone=cet))
 
     # TODO: Remove this
-    # sunset = datetime(2024, 11, 21, 9, 30)
-    # sunrise = datetime(2024, 11, 21, 11, 0)
+    sunset = datetime(2024, 11, 22, 15, 25)
+    sunrise = datetime(2024, 11, 22, 17, 0)
 
     return sunset, sunrise
 
@@ -57,6 +57,9 @@ def off():
         # Request gpio service to give access
         led_line.request(consumer="LED", type=GPIO.LINE_REQ_DIR_OUT)
         led_line.set_value(0)
+    except OSError as e:
+        print(f"Met error {e}, trying again")
+        off()
     finally:
         # Always release after setting pin value
         led_line.release()
@@ -123,8 +126,11 @@ def night(scheduler: BackgroundScheduler):
     temp = sunrise - sunset
     night_duration = temp.total_seconds()
 
-    NIGHT_PERIOD = 3600 * 1/2 # Half an hour night scheduling period
-    on_time = 60 # One minute on
+    # TODO: Put this back
+    # NIGHT_PERIOD = 3600 * 1/2 # Half an hour night scheduling period
+    # on_time = 60 # One minute on
+    NIGHT_PERIOD = 10
+    on_time = 5
     off_time = NIGHT_PERIOD - on_time
 
     def run_night():
@@ -139,6 +145,7 @@ def night(scheduler: BackgroundScheduler):
     # 1) Called "night" running the actual schedule
     # 2) Called "schedule_night" used to reschedule the night schedule every day at 12:00
     scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min, id="night", replace_existing=True, max_instances=1)
+    scheduler.add_job(night, trigger='cron', hour=12, minute=0, args=[scheduler], id="schedule_night", replace_existing=True)
 
 def schedule(scheduler: BackgroundScheduler):
     """

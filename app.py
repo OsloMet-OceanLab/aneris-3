@@ -17,28 +17,30 @@ def schedule():
     Sets schedules from video lights and UVC timetables
     """
 
-    for job in scheduler.get_jobs():
-        # Only remove jobs related to the UI time table
-        if job.id[:3] == "uvc" or job.id[:3] == "lig":
-            scheduler.remove_job(job.id)
+    # for job in scheduler.get_jobs():
+    #     # Only remove jobs related to the UI time table
+    #     if job.id[:3] == "uvc" or job.id[:3] == "lig":
+    #         scheduler.remove_job(job.id)
+
+    scheduler.remove_all_jobs()
             
     # Schedule lights
     lights.schedule(scheduler)
+    lights.night(scheduler)
     uvc.schedule(scheduler)
 
     # Display active jobs in terminal
     print(f"Current background processes:")
     utils.print_jobs(scheduler)
 
+# def schedule_night():
+#     # Update scheduler once a day in order to keep sunrise and sunset up to date
+#     # Triggers mid-day in order to avoid conflicts with lights at night
+#     scheduler.add_job(schedule_night, trigger='cron', hour=12, minute=0, id="schedule_night", replace_existing=True)
+    
 
-def schedule_night():
-    # Update scheduler once a day in order to keep sunrise and sunset up to date
-    # Triggers mid-day in order to avoid conflicts with lights at night
-    scheduler.add_job(schedule_night, trigger='cron', hour=12, minute=0, id="schedule_night", replace_existing=True)
-    lights.night(scheduler)
-
-    print(f"Current background processes:")
-    utils.print_jobs(scheduler)
+#     print(f"Current background processes:")
+#     utils.print_jobs(scheduler)
 
 
 @app.route("/")
@@ -81,34 +83,34 @@ def restart_schedule():
 
     return jsonify(res=res)
 
-@app.route("/set_night_schedule", methods=["POST"])
-def toggle_night_schedule():
-    """
-    Toggles the video lights at night
-    """
+# @app.route("/set_night_schedule", methods=["POST"])
+# def toggle_night_schedule():
+#     """
+#     Toggles the video lights at night
+#     """
 
-    print("Toggle night video light schedule")
+#     print("Toggle night video light schedule")
 
-    # Get state from UI
-    night_schedule_state = request.json.get("nightScheduleState")
+#     # Get state from UI
+#     night_schedule_state = request.json.get("nightScheduleState")
 
-    # Update configuration with night schedule state
-    CONFIG = configuration.get()
-    CONFIG["lights"]["night"] = night_schedule_state
-    configuration.set(CONFIG)
+#     # Update configuration with night schedule state
+#     CONFIG = configuration.get()
+#     CONFIG["lights"]["night"] = night_schedule_state
+#     configuration.set(CONFIG)
 
-    night_schedule_feedback = CONFIG["lights"]["night"]
+#     night_schedule_feedback = CONFIG["lights"]["night"]
 
-    if night_schedule_state:
-        # Schedule night light if commanded True from UI
-        schedule_night()
-    elif scheduler.running:
-        print("Scheduler running")
-        # Check if night light is running when commanded False from UI
-        scheduler.remove_job(job_id="night")
-        scheduler.remove_job(job_id="schedule_night")
+#     if night_schedule_state:
+#         # Schedule night light if commanded True from UI
+#         schedule_night()
+#     elif scheduler.running:
+#         print("Scheduler running")
+#         # Check if night light is running when commanded False from UI
+#         scheduler.remove_job(job_id="night")
+#         scheduler.remove_job(job_id="schedule_night")
 
-    return jsonify(night_schedule_feedback=night_schedule_feedback)
+#     return jsonify(night_schedule_feedback=night_schedule_feedback)
 
     
 
@@ -221,4 +223,10 @@ def get_pres():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        schedule()  # Schedule lights on start 
+        app.run(debug=True)
+    finally:
+        # End all background processes when closing app
+        scheduler.remove_all_jobs()
+        scheduler.shutdown()

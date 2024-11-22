@@ -12,8 +12,8 @@
                 "active": true
             },
             {
-                "start": "15:52",
-                "end": "15:54",
+                "start": "09:28",
+                "end": "09:29",
                 "active": true
             }
         ],
@@ -23,8 +23,8 @@
     "uvc": {
         "periods": [
             {
-                "start": "14:41",
-                "end": "15:00",
+                "start": "15:25",
+                "end": "16:00",
                 "active": true
             }
         ],
