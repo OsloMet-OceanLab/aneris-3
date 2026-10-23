@@ -135,7 +135,7 @@ def night(scheduler: BackgroundScheduler):
             sleep(off_time)
             repeat -= 1
 
-    # NOTE: The night schedule has consists of two jobs: 
+    # NOTE: The night schedule consists of two jobs: 
     # 1) Called "night" running the actual schedule
     # 2) Called "schedule_night" used to reschedule the night schedule every day at 12:00
     scheduler.add_job(run_night, trigger='cron', hour=start_hour, minute=start_min, id="night", replace_existing=True, max_instances=1)
