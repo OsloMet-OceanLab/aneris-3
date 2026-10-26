@@ -6,7 +6,7 @@ def string2datetime(string: str):
     Input:
         string: str, on the hour:minute format
     
-    Ouput:
+    Output:
         time_of_day: int, time of day in datetime format
     """
 
